@@ -1,0 +1,9 @@
+{
+  "name": "monly-jelly-app",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Monly Jelly LINE Pre-Order booking system (static + Vercel serverless API)",
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  }
+}
