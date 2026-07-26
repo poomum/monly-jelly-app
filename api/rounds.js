@@ -19,10 +19,10 @@ const kv = createClient({
 
 // รอบเริ่มต้น (ใช้ครั้งแรกถ้ายังไม่เคยตั้งค่าใน KV)
 const DEFAULT_ROUNDS = [
-  { id: "r1", date: "20 ก.ค. 2568", capacity: 20, booked: 20 },
-  { id: "r2", date: "27 ก.ค. 2568", capacity: 20, booked: 15 },
-  { id: "r3", date: "3 ส.ค. 2568", capacity: 20, booked: 4 },
-  { id: "r4", date: "10 ส.ค. 2568", capacity: 20, booked: 0 },
+  { id: "r1", date: "31 ก.ค. 2569", capacity: 10, booked: 0 },
+  { id: "r2", date: "7 ส.ค. 2569", capacity: 10, booked: 0 },
+  { id: "r3", date: "14 ส.ค. 2569", capacity: 10, booked: 0 },
+  { id: "r4", date: "21 ส.ค. 2569", capacity: 10, booked: 0 },
 ];
 
 function getRawBody(req) {
