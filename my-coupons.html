@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎟️ คูปองของฉัน - Monly Jelly</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .coupons-list {
+      display: grid;
+      gap: 20px;
+    }
+    .coupon-card {
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .coupon-card.pastel-pink {
+      background: linear-gradient(135deg, #FFB6D9 0%, #FFC6E4 100%);
+    }
+    .coupon-card.pastel-purple {
+      background: linear-gradient(135deg, #D8A9FF 0%, #E5CCFF 100%);
+    }
+    .coupon-card.pastel-rainbow {
+      background: linear-gradient(90deg, #FFB6D9, #FFD9B6, #FFEDD9, #D9FFD9, #D9F5FF, #D9D9FF);
+    }
+    .coupon-card.pastel-green {
+      background: linear-gradient(135deg, #A8E6CF 0%, #C6F5D9 100%);
+    }
+    .coupon-info {
+      flex: 1;
+    }
+    .coupon-info h3 {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .coupon-info p {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+    .coupon-status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      background: rgba(255,255,255,0.3);
+    }
+    .coupon-status.used {
+      background: rgba(0,0,0,0.2);
+      text-decoration: line-through;
+    }
+    .coupon-action {
+      text-align: right;
+    }
+    .coupon-value {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .btn-small {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.3);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-small:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    .empty-state h2 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .btn-secondary {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #f0f0f0;
+      color: #333;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎟️ คูปองของฉัน</h1>
+      <p>คูปองวันเกิด 20 บาท (ไม่มีวันหมดอายุ)</p>
+    </div>
+
+    <div class="content">
+      <div id="couponsContainer" class="loading">
+        ⏳ กำลังโหลด...
+      </div>
+
+      <div class="buttons" id="actionButtons" style="display: none;">
+        <a href="coupon-customizer.html" class="btn-primary">🎨 สร้างคูปองใหม่</a>
+        <a href="customers-profile.html" class="btn-secondary">👤 แก้ไขโปรไฟล์</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://monly-jelly-app.vercel.app';
+    let userId = null;
+
+    async function initLIFF() {
+      try {
+        const liffId = "2010516208-6xWO1hHP";
+        window.liff.init({ liffId })
+          .then(() => {
+            if (!window.liff.isLoggedIn()) {
+              window.liff.login();
+            } else {
+              const profile = window.liff.getProfile();
+              userId = profile.userId;
+              loadCoupons();
+            }
+          });
+      } catch (err) {
+        userId = localStorage.getItem('userId') || 'user-' + Date.now();
+        loadCoupons();
+      }
+    }
+
+    async function loadCoupons() {
+      try {
+        const res = await fetch(`${API_BASE}/api/coupons?userId=${userId}`);
+        if (!res.ok) throw new Error('Failed to load coupons');
+        const data = await res.json();
+
+        if (!data.coupons || data.coupons.length === 0) {
+          showEmptyState();
+          return;
+        }
+
+        renderCoupons(data.coupons);
+      } catch (err) {
+        console.error('Error:', err);
+        showError('ไม่สามารถโหลดคูปองได้');
+      }
+    }
+
+    function renderCoupons(coupons) {
+      const container = document.getElementById('couponsContainer');
+      container.className = 'coupons-list';
+      
+      container.innerHTML = coupons.map((coupon) => {
+        const isUsed = coupon.usedAt !== null;
+        const createdDate = new Date(coupon.createdAt).toLocaleDateString('th-TH');
+        
+        return `
+          <div class="coupon-card ${coupon.theme}">
+            <div class="coupon-info">
+              <h3>🎂 คูปองวันเกิด</h3>
+              <p>${coupon.greeting || 'Happy Birthday!'}</p>
+              <div class="coupon-status ${isUsed ? 'used' : ''}">
+                ${isUsed ? `✅ ใช้ไปแล้ว (Order #${coupon.usedInOrderId})` : '✨ พร้อมใช้'}
+              </div>
+              <p style="margin-top: 8px; font-size: 11px;">สร้างเมื่อ ${createdDate}</p>
+            </div>
+            <div class="coupon-action">
+              <div class="coupon-value">-20฿</div>
+              <div style="font-size: 11px; word-break: break-all;">${coupon.id}</div>
+              ${!isUsed ? `<button class="btn-small" onclick="copyCoupon('${coupon.id}')">📋 คัด</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('actionButtons').style.display = 'flex';
+    }
+
+    function showEmptyState() {
+      const container = document.getElementById('couponsContainer');
+      container.className = '';
+      container.innerHTML = `
+        <div class="empty-state">
+          <h2>🎁 ยังไม่มีคูปองจากวันเกิด</h2>
+          <p>สร้างคูปองวันเกิดของคุณเลย!</p>
+          <a href="coupon-customizer.html" class="btn-primary">🎨 สร้างคูปองใหม่</a>
+        </div>
+      `;
+      document.getElementById('actionButtons').style.display = 'flex';
+    }
+
+    function showError(message) {
+      const container = document.getElementById('couponsContainer');
+      container.className = '';
+      container.innerHTML = `<div style="text-align: center; color: #c62828; padding: 40px;">❌ ${message}</div>`;
+    }
+
+    function copyCoupon(couponId) {
+      navigator.clipboard.writeText(couponId).then(() => {
+        alert('✅ คัดลอกรหัสคูปองแล้ว: ' + couponId);
+      });
+    }
+
+    initLIFF();
+  </script>
+  <script src="https://d.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+</body>
+</html>

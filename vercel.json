@@ -1,0 +1,11 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/birthday-job",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
