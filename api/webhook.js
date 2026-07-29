@@ -139,6 +139,13 @@ module.exports = async (req, res) => {
   const secret = process.env.LINE_CHANNEL_SECRET;
 
   if (!signature || !secret || !verifySignature(rawBody, signature, secret)) {
+    // Log แบบละเอียดเพื่อช่วยหาสาเหตุ (ไม่เปิดเผยค่า secret จริง เพื่อความปลอดภัย)
+    console.error("Webhook signature verification failed:", {
+      hasSignatureHeader: !!signature,
+      hasSecretConfigured: !!secret,
+      secretLength: secret ? secret.length : 0,
+      bodyLength: rawBody ? rawBody.length : 0,
+    });
     res.status(401).json({ error: "invalid signature" });
     return;
   }
