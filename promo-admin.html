@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Monly Jelly – จัดการโปรโมชั่น</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Nunito:wght@700;800;900&display=swap');
+:root{--pink:#FF6B9D;--purple:#7B5EA7;--dark:#2D2233;--gray:#6a5a7a;--green:#00B900;--red:#C0392B;--bg:#F6F2FB;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;font-family:'Mitr',sans-serif;color:var(--dark);background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+.header{background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:20px;padding:20px;color:#fff;margin-bottom:18px;box-shadow:0 8px 24px rgba(123,94,167,.25)}
+.header h1{font-family:'Nunito',sans-serif;font-size:19px;font-weight:900;margin-bottom:5px}
+.header p{font-size:12.5px;opacity:.92;line-height:1.6}
+.panel{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px rgba(123,94,167,.1)}
+.panel h3{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px}
+select,input{width:100%;border:2px solid #e8e0f0;border-radius:10px;padding:10px 12px;font-family:'Mitr',sans-serif;font-size:13.5px}
+select:focus,input:focus{outline:none;border-color:var(--purple)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:'Mitr',sans-serif}
+.btn:active{transform:scale(.98)}
+.result{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.7}
+.result.ok{background:#EFFAF0;color:#1B8A3A}
+.result.bad{background:#FDEDED;color:var(--red)}
+.promo-card{border:2px solid #e8e0f0;border-radius:14px;padding:14px;margin-bottom:10px}
+.promo-card.inactive{opacity:.55;background:#FAFAFA}
+.promo-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.promo-card .code{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--purple)}
+.promo-card .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700}
+.badge.active{background:#EFFAF0;color:#1B8A3A}
+.badge.inactive{background:#f0f0f0;color:var(--gray)}
+.promo-card .meta{font-size:12px;color:var(--gray);line-height:1.7}
+.promo-actions{display:flex;gap:8px;margin-top:10px}
+.promo-actions button{flex:1;padding:8px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mitr',sans-serif}
+.btn-toggle{background:#F0EBFB;color:var(--purple)}
+.btn-delete{background:#FDEDED;color:var(--red)}
+.empty{text-align:center;padding:20px 10px;color:var(--gray);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🎟️ จัดการโปรโมชั่น</h1>
+    <p>สร้างโค้ดส่วนลดกำหนดเอง เปิด/ปิดใช้งาน หรือลบได้ตลอด</p>
+  </div>
+
+  <div class="panel">
+    <div class="field" style="background:#EFFAF0;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#1B8A3A;font-weight:700">
+      👤 กำลังใช้งานในนาม: <span id="loggedInAsName">กำลังตรวจสอบ...</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>➕ สร้างโปรโมชั่นใหม่</h3>
+    <div class="sub">ตั้งได้ทุกเดือน กำหนดเงื่อนไขเองได้ครบ</div>
+
+    <div class="field">
+      <label>รหัสโปรโมชั่น</label>
+      <input type="text" id="pCode" placeholder="เช่น AUGUST10" style="text-transform:uppercase">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>ประเภทส่วนลด</label>
+        <select id="pType">
+          <option value="percent">ลดเป็น % </option>
+          <option value="fixed">ลดจำนวนเงินคงที่ (บาท)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ค่าที่ลด</label>
+        <input type="number" id="pValue" placeholder="เช่น 10" min="1">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>วันเริ่มใช้ได้</label>
+        <input type="date" id="pStart">
+      </div>
+      <div class="field">
+        <label>วันหมดอายุ</label>
+        <input type="date" id="pEnd">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>ยอดขั้นต่ำ (บาท, เว้นว่าง = ไม่จำกัด)</label>
+        <input type="number" id="pMinOrder" placeholder="เช่น 200" min="0">
+      </div>
+      <div class="field">
+        <label>จำกัดจำนวนครั้ง (เว้นว่าง = ไม่จำกัด)</label>
+        <input type="number" id="pMaxUses" placeholder="เช่น 50" min="1">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>🎮 ลิงก์เกม (เว้นว่าง = ไม่ใช้ระบบเกม)</label>
+      <input type="text" id="pGameUrl" placeholder="https://...">
+      <div class="sub" style="margin-top:4px;margin-bottom:0">ถ้าใส่ลิงก์นี้ไว้ ลูกค้าต้องกดเข้าไปเล่นเกมก่อนถึงจะกดรับโค้ดนี้ได้ (โชว์เป็นแบนเนอร์พิเศษในหน้าจอง)</div>
+    </div>
+    <div class="field">
+      <label>ข้อความบนแบนเนอร์เกม (ถ้าไม่ใส่จะใช้ข้อความเริ่มต้น)</label>
+      <input type="text" id="pGameLabel" placeholder="เช่น เล่นเกมทายรสเยลลี่ รับส่วนลด!">
+    </div>
+
+    <button class="btn" onclick="createPromotion()">💾 สร้างโปรโมชั่น</button>
+    <div class="result" id="createResult" style="display:none"></div>
+  </div>
+
+  <div class="panel">
+    <h3>📋 โปรโมชั่นทั้งหมด</h3>
+    <button class="btn" style="background:#F0EBFB;color:var(--purple);margin-bottom:12px" onclick="loadPromotions()">🔄 รีเฟรช</button>
+    <div id="promoList"><div class="empty">กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://monly-jelly-app.vercel.app';
+
+  function getAdminToken() { return localStorage.getItem('mj_admin_token'); }
+
+  function formatThaiDate(iso) {
+    if (!iso) return '-';
+    try {
+      return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch { return iso; }
+  }
+
+  // เช็คว่า Login อยู่จริงไหมตอนเปิดหน้านี้ ถ้าไม่ได้ Login ให้เด้งไปหน้า Login ก่อน
+  (async () => {
+    const token = getAdminToken();
+    if (!token) { window.location.href = 'admin-login.html'; return; }
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=verify`, {
+        headers: { 'x-admin-session': token },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) { window.location.href = 'admin-login.html'; return; }
+      document.getElementById('loggedInAsName').textContent = data.name;
+      loadPromotions();
+    } catch (e) { window.location.href = 'admin-login.html'; }
+  })();
+
+  async function createPromotion() {
+    const resultBox = document.getElementById('createResult');
+    const code = document.getElementById('pCode').value.trim();
+    const type = document.getElementById('pType').value;
+    const value = document.getElementById('pValue').value;
+    const startDate = document.getElementById('pStart').value || null;
+    const endDate = document.getElementById('pEnd').value || null;
+    const minOrderValue = document.getElementById('pMinOrder').value || 0;
+    const maxUses = document.getElementById('pMaxUses').value || null;
+    const gameUrl = document.getElementById('pGameUrl').value.trim() || null;
+    const gameLabel = document.getElementById('pGameLabel').value.trim() || null;
+
+    if (!code || !value) {
+      resultBox.className = 'result bad';
+      resultBox.style.display = 'block';
+      resultBox.textContent = '❌ กรุณากรอกรหัสโปรโมชั่นและค่าที่ลดให้ครบ';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/promotions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ code, type, value: Number(value), startDate, endDate, minOrderValue: Number(minOrderValue), maxUses: maxUses ? Number(maxUses) : null, gameUrl, gameLabel }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        resultBox.className = 'result bad';
+        resultBox.style.display = 'block';
+        resultBox.textContent = '❌ ' + (data.error || 'สร้างไม่สำเร็จ');
+        return;
+      }
+
+      resultBox.className = 'result ok';
+      resultBox.style.display = 'block';
+      resultBox.textContent = `✅ สร้างโปรโมชั่น "${data.promotion.code}" สำเร็จ!`;
+
+      // เคลียร์ฟอร์ม
+      document.getElementById('pCode').value = '';
+      document.getElementById('pValue').value = '';
+      document.getElementById('pStart').value = '';
+      document.getElementById('pEnd').value = '';
+      document.getElementById('pMinOrder').value = '';
+      document.getElementById('pMaxUses').value = '';
+      document.getElementById('pGameUrl').value = '';
+      document.getElementById('pGameLabel').value = '';
+
+      loadPromotions();
+    } catch (err) {
+      resultBox.className = 'result bad';
+      resultBox.style.display = 'block';
+      resultBox.textContent = '❌ เชื่อมต่อไม่สำเร็จ: ' + err.message;
+    }
+  }
+
+  async function loadPromotions() {
+    const listBox = document.getElementById('promoList');
+    listBox.innerHTML = '<div class="empty">กำลังโหลด...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/promotions`, {
+        headers: { 'x-admin-session': getAdminToken() },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        listBox.innerHTML = `<div class="empty">❌ ${data.error || 'โหลดไม่สำเร็จ'}</div>`;
+        return;
+      }
+
+      if (!data.promotions || data.promotions.length === 0) {
+        listBox.innerHTML = '<div class="empty">ยังไม่มีโปรโมชั่น สร้างอันแรกได้เลยด้านบน</div>';
+        return;
+      }
+
+      listBox.innerHTML = data.promotions.map((p) => {
+        const valueText = p.type === 'percent' ? `ลด ${p.value}%` : `ลด ฿${p.value}`;
+        return `
+        <div class="promo-card ${p.active ? '' : 'inactive'}">
+          <div class="top">
+            <span class="code">${p.code}</span>
+            <span class="badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span>
+          </div>
+          <div class="meta">
+            ${valueText} ${p.minOrderValue ? `· ยอดขั้นต่ำ ฿${p.minOrderValue}` : ''}<br>
+            ใช้ได้: ${formatThaiDate(p.startDate)} – ${formatThaiDate(p.endDate)}<br>
+            ใช้ไปแล้ว ${p.usedCount} ครั้ง${p.maxUses ? ` / จำกัด ${p.maxUses} ครั้ง` : ' (ไม่จำกัดจำนวนครั้ง)'}
+            ${p.gameUrl ? `<br>🎮 <a href="${p.gameUrl}" target="_blank" style="color:var(--purple)">มีลิงก์เกมผูกไว้</a> (รหัสเกม: <code>${p.gameId}</code>)` : ''}
+          </div>
+          ${p.gameUrl ? `<button class="btn-toggle" style="width:100%;margin-bottom:8px" onclick="showGameSnippet('${p.gameId}')">📋 ดูโค้ดที่ต้องแปะในหน้าเกม (ยืนยันเล่นจบจริง)</button>` : ''}
+          <div class="promo-actions">
+            <button class="btn-toggle" onclick="togglePromotion('${p.code}', ${!p.active})">${p.active ? '⏸️ ปิดใช้งาน' : '▶️ เปิดใช้งาน'}</button>
+            <button class="btn-delete" onclick="deletePromotion('${p.code}')">🗑️ ลบ</button>
+          </div>
+        </div>
+      `;
+      }).join('');
+    } catch (err) {
+      listBox.innerHTML = `<div class="empty">❌ เชื่อมต่อไม่สำเร็จ: ${err.message}</div>`;
+    }
+  }
+
+  async function togglePromotion(code, newActiveState) {
+    try {
+      await fetch(`${API_BASE}/api/promotions?code=${encodeURIComponent(code)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ active: newActiveState }),
+      });
+      loadPromotions();
+    } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  }
+
+  async function deletePromotion(code) {
+    if (!confirm(`ต้องการลบโปรโมชั่น "${code}" ใช่ไหมคะ?`)) return;
+    try {
+      await fetch(`${API_BASE}/api/promotions?code=${encodeURIComponent(code)}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-session': getAdminToken() },
+      });
+      loadPromotions();
+    } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  }
+
+  function showGameSnippet(gameId) {
+    const snippet = `window.opener.postMessage({ type: "monly-jelly-game-complete", gameId: "${gameId}" }, "*");`;
+    const message =
+      'วางโค้ดนี้ในหน้าเกมของคุณ ตรงจุดที่เกม "จบ/ชนะ" (เช่น ในฟังก์ชัน onGameWin หรือ onGameEnd):\n\n' +
+      snippet +
+      '\n\n' +
+      'ถ้าไม่แปะโค้ดนี้ ลูกค้าก็ยังกด "เล่นแล้ว รับโค้ดเลย" เองได้ตามปกติ ' +
+      '(แค่จะไม่มีการยืนยันจริงจากเกม เป็นการยืนยันด้วยตัวเองแทน)';
+    if (confirm(message + '\n\nกด OK เพื่อคัดลอกโค้ดนี้')) {
+      navigator.clipboard.writeText(snippet).then(() => {
+        alert('✅ คัดลอกโค้ดแล้วค่ะ');
+      });
+    }
+  }
+</script>
+</body>
+</html>
