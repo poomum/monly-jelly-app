@@ -1,0 +1,19 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/birthday-job",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/admin-log", "destination": "/api/admin-utils?resource=log" },
+    { "source": "/api/customers", "destination": "/api/admin-utils?resource=customers" },
+    { "source": "/api/customer-history", "destination": "/api/admin-utils?resource=history" },
+    { "source": "/api/tracking-pool", "destination": "/api/commerce-extra?resource=tracking-pool" },
+    { "source": "/api/waitlist", "destination": "/api/commerce-extra?resource=waitlist" },
+    { "source": "/api/coupons", "destination": "/api/commerce-extra?resource=coupons" }
+  ]
+}
