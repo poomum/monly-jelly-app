@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Monly Jelly – ออเดอร์แยกตามรอบ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Nunito:wght@700;800;900&display=swap');
+:root{--pink:#FF6B9D;--purple:#7B5EA7;--dark:#2D2233;--gray:#6a5a7a;--green:#00B900;--red:#C0392B;--bg:#F6F2FB;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;font-family:'Mitr',sans-serif;color:var(--dark);background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:70px 16px 60px}
+.header{background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:20px;padding:20px;color:#fff;margin-bottom:18px;box-shadow:0 8px 24px rgba(123,94,167,.25)}
+.header h1{font-family:'Nunito',sans-serif;font-size:19px;font-weight:900;margin-bottom:5px}
+.header p{font-size:12.5px;opacity:.92;line-height:1.6}
+.panel{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px rgba(123,94,167,.1)}
+.panel h3{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:'Mitr',sans-serif;margin-bottom:8px}
+.btn:active{transform:scale(.98)}
+.btn.export{background:linear-gradient(135deg,#1B8A3A,#00B900)}
+.btn.secondary{background:#F0EBFB;color:var(--purple)}
+.stat-badge{display:inline-block;background:#F0EBFB;color:var(--purple);padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:700;margin-left:6px}
+.round-card{border:2px solid #e8e0f0;border-radius:14px;padding:14px;margin-bottom:10px}
+.round-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.round-card .date{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:var(--purple)}
+.round-card .count{font-size:12px;background:#EFFAF0;color:#1B8A3A;padding:3px 10px;border-radius:20px;font-weight:700}
+.customer-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f0fa;font-size:12.5px}
+.customer-line:last-child{border-bottom:none}
+.customer-line .name{font-weight:600}
+.badge-status{font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:700}
+.badge-status.pending_payment{background:#FFF3E0;color:#B8720A}
+.badge-status.paid{background:#EFFAF0;color:#1B8A3A}
+.badge-status.shipped{background:#E8F0FF;color:#1B4A9A}
+.badge-status.cancelled{background:#f0f0f0;color:var(--gray)}
+.empty{text-align:center;padding:20px 10px;color:var(--gray);font-size:13px}
+</style>
+</head>
+<body>
+<style>
+.mj-nav-toggle{position:fixed;top:12px;left:12px;z-index:1001;width:46px;height:46px;border-radius:50%;border:none;background:#7B5EA7;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(123,94,167,.4);display:flex;align-items:center;justify-content:center}
+.mj-nav-backdrop{display:none;position:fixed;inset:0;background:rgba(45,34,51,.4);z-index:999}
+.mj-nav-backdrop.open{display:block}
+.mj-admin-nav{position:fixed;top:0;left:0;height:100vh;width:230px;display:flex;flex-direction:column;gap:8px;padding:70px 14px 14px;background:#FBF9FF;border-right:2px solid #F0EBFB;z-index:1000;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto}
+.mj-admin-nav.open{transform:translateX(0)}
+.mj-admin-nav a{padding:11px 14px;background:#fff;border:2px solid #F0EBFB;border-radius:12px;text-decoration:none;color:#333;font-weight:700;font-size:13px;white-space:nowrap}
+.mj-admin-nav a.active{background:#7B5EA7;border-color:#7B5EA7;color:#fff}
+</style>
+<button class="mj-nav-toggle" onclick="toggleAdminNav()" aria-label="เมนู">☰</button>
+<div class="mj-nav-backdrop" id="navBackdrop" onclick="closeAdminNav()"></div>
+<div class="mj-admin-nav" id="adminNav">
+  <a href="admin-login.html">🏠 หน้าแรก</a>
+  <a href="tracking-admin.html">📮 แทร็กกิ้ง</a>
+  <a href="rounds-admin.html">⚙️ รอบจอง</a>
+  <a href="orders-admin.html" class="active">📊 ออเดอร์</a>
+  <a href="customers-admin.html">👥 ลูกค้า</a>
+  <a href="promo-admin.html">🎟️ โปรโมชั่น</a>
+  <a href="admin-log.html">📋 ประวัติ</a>
+</div>
+
+<div class="wrap">
+  <div class="header">
+    <h1>📊 ออเดอร์แยกตามรอบ</h1>
+    <p>ดูจำนวนออเดอร์ + รายชื่อลูกค้าแต่ละรอบ พร้อม Export เป็นไฟล์เปิดใน Google Sheets ได้เลย</p>
+  </div>
+
+  <div class="panel">
+    <div style="background:#EFFAF0;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#1B8A3A;font-weight:700">
+      👤 กำลังใช้งานในนาม: <span id="loggedInAsName">กำลังตรวจสอบ...</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button class="btn secondary" onclick="loadOrders()">🔄 รีเฟรชข้อมูล</button>
+    <button class="btn export" onclick="exportToCSV()">📥 Export เป็น CSV (เปิดใน Google Sheets)</button>
+    <div class="sub" style="margin-bottom:0">
+      ดาวน์โหลดไฟล์แล้ว → เปิด Google Sheets → File → Import → อัปโหลดไฟล์นี้ได้เลย
+      (หรือลากไฟล์ไปวางในหน้า Google Sheets ก็ได้เช่นกัน)
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>สรุปแต่ละรอบ <span class="stat-badge" id="totalBadge" style="display:none"></span></h3>
+    <div id="roundsList"><div class="empty">กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<script>
+  function toggleAdminNav(){
+    document.getElementById('adminNav').classList.toggle('open');
+    document.getElementById('navBackdrop').classList.toggle('open');
+  }
+  function closeAdminNav(){
+    document.getElementById('adminNav').classList.remove('open');
+    document.getElementById('navBackdrop').classList.remove('open');
+  }
+
+  const API_BASE = 'https://monly-jelly-application.vercel.app';
+  let allOrders = [];
+
+  function getAdminToken() { return localStorage.getItem('mj_admin_token'); }
+
+  const STATUS_LABELS = {
+    pending_payment: 'รอชำระเงิน',
+    paid: 'ชำระแล้ว',
+    shipped: 'จัดส่งแล้ว',
+    cancelled: 'ยกเลิก',
+  };
+
+  // เช็คว่า Login อยู่จริงไหมตอนเปิดหน้านี้
+  (async () => {
+    const token = getAdminToken();
+    if (!token) { window.location.href = 'admin-login.html'; return; }
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=verify`, {
+        headers: { 'x-admin-session': token },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) { window.location.href = 'admin-login.html'; return; }
+      document.getElementById('loggedInAsName').textContent = data.name;
+      loadOrders();
+    } catch (e) { window.location.href = 'admin-login.html'; }
+  })();
+
+  // จัดกลุ่มออเดอร์ตามรอบ คืนเป็น array เรียงตามวันที่ล่าสุดก่อน
+  function groupByRound(orders) {
+    const groups = {};
+    for (const o of orders) {
+      const roundId = (o.round && o.round.id) || 'ไม่ระบุรอบ';
+      const roundDate = (o.round && o.round.date) || 'ไม่ระบุรอบ';
+      if (!groups[roundId]) groups[roundId] = { roundId, roundDate, orders: [] };
+      groups[roundId].orders.push(o);
+    }
+    return Object.values(groups).sort((a, b) => b.roundId.localeCompare(a.roundId));
+  }
+
+  async function loadOrders() {
+    const listBox = document.getElementById('roundsList');
+    listBox.innerHTML = '<div class="empty">กำลังโหลด...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        headers: { 'x-admin-session': getAdminToken() },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        listBox.innerHTML = `<div class="empty">❌ ${data.error || 'โหลดไม่สำเร็จ'}</div>`;
+        return;
+      }
+
+      allOrders = data.orders || [];
+      document.getElementById('totalBadge').style.display = 'inline-block';
+      document.getElementById('totalBadge').textContent = `ทั้งหมด ${allOrders.length} ออเดอร์`;
+
+      renderRounds(groupByRound(allOrders));
+    } catch (err) {
+      listBox.innerHTML = `<div class="empty">❌ เชื่อมต่อไม่สำเร็จ: ${err.message}</div>`;
+    }
+  }
+
+  function renderRounds(groups) {
+    const listBox = document.getElementById('roundsList');
+    if (!groups.length) {
+      listBox.innerHTML = '<div class="empty">ยังไม่มีออเดอร์เลยตอนนี้</div>';
+      return;
+    }
+
+    listBox.innerHTML = groups.map((g) => `
+      <div class="round-card">
+        <div class="top">
+          <span class="date">📅 ${g.roundDate}</span>
+          <span class="count">${g.orders.length} ออเดอร์</span>
+        </div>
+        ${g.orders.map((o) => `
+          <div class="customer-line" style="display:block;padding:10px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="name">${(o.customer && o.customer.name) || 'ไม่ทราบชื่อ'}</span>
+              <span class="badge-status ${o.status}">${STATUS_LABELS[o.status] || o.status}</span>
+            </div>
+            <div style="font-size:11px;color:var(--gray);margin:4px 0">
+              #${o.orderId}${o.trackingNumber ? ` · 📮 ${o.trackingNumber}` : ''}
+            </div>
+            <div style="font-size:12px;color:var(--dark);margin:4px 0;display:flex;justify-content:space-between;align-items:center">
+              <span>${o.shipping ? '🚚 ' + o.shipping.name : ''}</span>
+              <span style="font-weight:800">฿${(o.grandTotal || 0).toLocaleString()}</span>
+            </div>
+            ${o.promoCode ? `
+              <div style="font-size:11px;color:#1B8A3A;margin-bottom:4px">
+                ${o.promoType === 'free_shipping' ? '🚚 ส่งฟรี' : '🎟️ ลด ฿' + (o.discount || 0)} (โค้ด ${o.promoCode})
+              </div>
+            ` : ''}
+            ${renderStatusButtons(o)}
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  // ปุ่มเปลี่ยนสถานะ — โชว์ตามสถานะปัจจุบันของออเดอร์นั้นๆ เท่านั้น
+  // (ป้องกันกดข้ามขั้นตอน เช่น ยังไม่จ่ายเงินแต่กดจัดส่งได้)
+  function renderStatusButtons(o) {
+    if (o.status === 'cancelled') return ''; // จบแล้ว ไม่มีอะไรให้ทำต่อ
+
+    const buttons = [];
+    if (o.status === 'pending_payment') {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','paid')">✅ ยืนยันจ่ายแล้ว</button>`);
+    }
+    if (o.status === 'paid') {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','shipped')">📦 จัดส่งแล้ว</button>`);
+    }
+    if (o.status !== 'shipped') {
+      buttons.push(`<button class="btn-delete" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','cancelled')">❌ ยกเลิก</button>`);
+    }
+    if (!buttons.length) return '';
+    return `<div style="display:flex;gap:6px;margin-top:6px">${buttons.join('')}</div>`;
+  }
+
+  async function updateOrderStatus(orderId, newStatus) {
+    let trackingNumber = null;
+
+    if (newStatus === 'shipped') {
+      trackingNumber = prompt(
+        'ใส่เลขพัสดุ (เว้นว่างแล้วกด OK เพื่อดึงเลขจากคลังอัตโนมัติตามขนส่งที่ลูกค้าเลือกไว้):'
+      );
+      if (trackingNumber === null) return; // กดยกเลิก prompt
+    }
+
+    if (newStatus === 'cancelled' && !confirm(`ต้องการยกเลิกออเดอร์ #${orderId} ใช่ไหมคะ? (คืนที่นั่งให้รอบทันที)`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus,
+          ...(trackingNumber ? { trackingNumber } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'อัปเดตไม่สำเร็จ'));
+        return;
+      }
+      loadOrders(); // รีเฟรชรายการให้เห็นสถานะล่าสุดทันที
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // แปลงข้อความให้ปลอดภัยสำหรับใส่ใน CSV (กันกรณีชื่อมีจุลภาค/เครื่องหมายคำพูดปน)
+  function csvEscape(value) {
+    const str = String(value ?? '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function exportToCSV() {
+    if (!allOrders.length) {
+      alert('ยังไม่มีข้อมูลออเดอร์ให้ Export ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ');
+      return;
+    }
+
+    const groups = groupByRound(allOrders);
+
+    // แถวหัวตาราง
+    const rows = [
+      ['วันที่รอบ', 'จำนวนออเดอร์ในรอบ', 'เลขออเดอร์', 'ชื่อลูกค้า', 'เบอร์โทร', 'สถานะ', 'ยอดเงิน (บาท)'],
+    ];
+
+    for (const g of groups) {
+      g.orders.forEach((o, idx) => {
+        rows.push([
+          idx === 0 ? g.roundDate : '',              // โชว์วันที่รอบแค่แถวแรกของกลุ่ม (อ่านง่ายขึ้น)
+          idx === 0 ? g.orders.length : '',           // โชว์จำนวนรวมแค่แถวแรกของกลุ่ม
+          o.orderId || '',
+          (o.customer && o.customer.name) || '',
+          (o.customer && o.customer.phone) || '',
+          STATUS_LABELS[o.status] || o.status || '',
+          o.grandTotal || 0,
+        ]);
+      });
+    }
+
+    const csvContent = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
+
+    // ใส่ BOM (\uFEFF) นำหน้า กันปัญหาภาษาไทยเพี้ยนตอนเปิดใน Excel/Google Sheets
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `monly-jelly-orders-${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
