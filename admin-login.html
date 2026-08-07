@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Monly Jelly – เข้าสู่ระบบแอดมิน</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Nunito:wght@700;800;900&display=swap');
+:root{--pink:#FF6B9D;--purple:#7B5EA7;--dark:#2D2233;--gray:#6a5a7a;--green:#00B900;--red:#C0392B;--bg:#F6F2FB;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;font-family:'Mitr',sans-serif;color:var(--dark);background:var(--bg)}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px 60px}
+.header{background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:20px;padding:20px;color:#fff;margin-bottom:18px;box-shadow:0 8px 24px rgba(123,94,167,.25)}
+.header h1{font-family:'Nunito',sans-serif;font-size:19px;font-weight:900;margin-bottom:5px}
+.header p{font-size:12.5px;opacity:.92;line-height:1.6}
+.panel{background:#fff;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 3px 14px rgba(123,94,167,.1)}
+.panel h3{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.6}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px}
+input{width:100%;border:2px solid #e8e0f0;border-radius:10px;padding:12px 14px;font-family:'Mitr',sans-serif;font-size:14px}
+input:focus{outline:none;border-color:var(--purple)}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:'Mitr',sans-serif}
+.btn:active{transform:scale(.98)}
+.btn.logout{background:none;border:2px solid #f0d5d5;color:var(--red)}
+.result{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.7}
+.result.ok{background:#EFFAF0;color:#1B8A3A}
+.result.bad{background:#FDEDED;color:var(--red)}
+.logged-in-box{background:linear-gradient(135deg,#EFFAF0,#F0FFF4);border:2px solid #b8e6c0;border-radius:14px;padding:18px;text-align:center;margin-bottom:14px}
+.logged-in-box .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;color:#1B8A3A}
+.logged-in-box .meta{font-size:12px;color:var(--gray);margin-top:4px}
+.tool-links{display:grid;gap:10px;margin-top:14px}
+.tool-link{display:block;padding:13px 16px;background:#FBF9FF;border:2px solid #F0EBFB;border-radius:12px;text-decoration:none;color:var(--dark);font-weight:700;font-size:13.5px;text-align:left}
+.tool-link:active{background:#F0EBFB}
+.session-item{border-left:4px solid var(--green);background:#FBF9FF;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:8px}
+.session-item.you{border-left-color:var(--pink)}
+.session-item .top{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.session-item .meta{font-size:11px;color:var(--gray);margin-top:3px}
+.empty{text-align:center;padding:20px 10px;color:var(--gray);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🔐 เข้าสู่ระบบแอดมิน</h1>
+    <p>Monly Jelly — สำหรับเจ้าของร้านและพนักงานที่ได้รับอนุญาตเท่านั้น</p>
+  </div>
+
+  <!-- แสดงตอนยังไม่ได้ Login -->
+  <div class="panel" id="loginPanel" style="display:none">
+    <h3>เข้าสู่ระบบ</h3>
+    <div class="sub">กรอก Username และ Password ที่ได้รับจากเจ้าของร้าน</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="เช่น owner หรือ staffA" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="รหัสผ่านของคุณ" autocomplete="current-password">
+    </div>
+    <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="result" id="loginResult" style="display:none"></div>
+  </div>
+
+  <!-- แสดงตอน Login แล้ว -->
+  <div id="loggedInSection" style="display:none">
+    <div class="logged-in-box">
+      <div class="name" id="loggedInName">–</div>
+      <div class="meta" id="loggedInMeta">–</div>
+    </div>
+
+    <div class="panel">
+      <h3>🛠️ เครื่องมือแอดมิน</h3>
+      <div class="tool-links">
+        <a class="tool-link" href="tracking-admin.html">📮 จัดการเลขแทร็กกิ้ง</a>
+        <a class="tool-link" href="rounds-admin.html">⚙️ ตั้งค่ารอบจอง</a>
+        <a class="tool-link" href="orders-admin.html">📊 ออเดอร์แยกตามรอบ + Export</a>
+        <a class="tool-link" href="customers-admin.html">👥 รายชื่อลูกค้า + ประวัติสั่งซื้อ</a>
+        <a class="tool-link" href="promo-admin.html">🎟️ จัดการโปรโมชั่น</a>
+        <a class="tool-link" href="admin-log.html">📋 ดูประวัติการใช้งานทั้งหมด</a>
+        <a class="tool-link" href="my-line-id.html" target="_blank" style="background:#FFF9E6;border-color:#F0E0A0">🪪 เช็ค LINE ID ของฉัน (ต้องเปิดผ่านแชท LINE เท่านั้น)</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>👀 ใคร Login อยู่ตอนนี้บ้าง</h3>
+      <div class="sub">อัปเดตแบบ real-time ทุกครั้งที่กดรีเฟรช</div>
+      <button class="btn" style="background:#F0EBFB;color:var(--purple);margin-bottom:12px" onclick="loadActiveSessions()">🔄 รีเฟรช</button>
+      <div id="activeSessionsList"><div class="empty">กดปุ่มรีเฟรชเพื่อดูข้อมูล</div></div>
+    </div>
+
+    <div class="panel">
+      <button class="btn logout" onclick="doLogout()">🚪 ออกจากระบบ (Logout)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://monly-jelly-application.vercel.app';
+
+  function getToken() { return localStorage.getItem('mj_admin_token'); }
+  function setToken(t) { localStorage.setItem('mj_admin_token', t); }
+  function clearToken() { localStorage.removeItem('mj_admin_token'); }
+
+  function formatThaiDateTime(iso) {
+    try {
+      return new Date(iso).toLocaleString('th-TH', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+    } catch { return iso; }
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const resultBox = document.getElementById('loginResult');
+
+    if (!username || !password) {
+      resultBox.className = 'result bad';
+      resultBox.style.display = 'block';
+      resultBox.textContent = '❌ กรุณากรอก Username และ Password ให้ครบ';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        resultBox.className = 'result bad';
+        resultBox.style.display = 'block';
+        resultBox.textContent = '❌ ' + (data.error || 'เข้าสู่ระบบไม่สำเร็จ');
+        return;
+      }
+
+      setToken(data.token);
+      showLoggedIn(data.name, data.expiresAt);
+    } catch (err) {
+      resultBox.className = 'result bad';
+      resultBox.style.display = 'block';
+      resultBox.textContent = '❌ เชื่อมต่อไม่สำเร็จ: ' + err.message;
+    }
+  }
+
+  async function doLogout() {
+    const token = getToken();
+    try {
+      await fetch(`${API_BASE}/api/admin-auth?action=logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+    } catch (e) { /* ออกจากระบบฝั่งเราต่อได้แม้ network error */ }
+    clearToken();
+    showLoginForm();
+  }
+
+  function showLoginForm() {
+    document.getElementById('loginPanel').style.display = 'block';
+    document.getElementById('loggedInSection').style.display = 'none';
+  }
+
+  function showLoggedIn(name, expiresAt) {
+    document.getElementById('loginPanel').style.display = 'none';
+    document.getElementById('loggedInSection').style.display = 'block';
+    document.getElementById('loggedInName').textContent = '👋 สวัสดี ' + name;
+    document.getElementById('loggedInMeta').textContent =
+      'Session จะหมดอายุ: ' + formatThaiDateTime(expiresAt);
+  }
+
+  async function loadActiveSessions() {
+    const token = getToken();
+    const listBox = document.getElementById('activeSessionsList');
+    listBox.innerHTML = '<div class="empty">กำลังโหลด...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=active-sessions`, {
+        headers: { 'x-admin-session': token },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        listBox.innerHTML = `<div class="empty">❌ ${data.error || 'โหลดไม่สำเร็จ'}</div>`;
+        return;
+      }
+
+      if (!data.sessions || data.sessions.length === 0) {
+        listBox.innerHTML = '<div class="empty">ไม่มีใคร Login อยู่ตอนนี้</div>';
+        return;
+      }
+
+      listBox.innerHTML = data.sessions.map((s) => `
+        <div class="session-item">
+          <div class="top"><span>👤 ${s.name}</span><span style="font-size:11px;color:var(--gray)">${s.ip || ''}</span></div>
+          <div class="meta">เข้าใช้งานเมื่อ ${formatThaiDateTime(s.loginAt)} · ใช้งานล่าสุด ${formatThaiDateTime(s.lastSeenAt)}</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      listBox.innerHTML = `<div class="empty">❌ เชื่อมต่อไม่สำเร็จ: ${err.message}</div>`;
+    }
+  }
+
+  // ตรวจสอบตอนเปิดหน้าเว็บว่ามี session ที่ยังใช้ได้ค้างอยู่ไหม
+  (async () => {
+    const token = getToken();
+    if (!token) { showLoginForm(); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=verify`, {
+        headers: { 'x-admin-session': token },
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        showLoggedIn(data.name, data.expiresAt);
+        loadActiveSessions();
+      } else {
+        clearToken();
+        showLoginForm();
+      }
+    } catch (e) {
+      showLoginForm();
+    }
+  })();
+</script>
+</body>
+</html>
