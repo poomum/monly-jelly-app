@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Monly Jelly – ออเดอร์แยกตามรอบ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Nunito:wght@700;800;900&display=swap');
+:root{--pink:#FF6B9D;--purple:#7B5EA7;--dark:#2D2233;--gray:#6a5a7a;--green:#00B900;--red:#C0392B;--bg:#F6F2FB;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;font-family:'Mitr',sans-serif;color:var(--dark);background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:70px 16px 60px}
+.header{background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:20px;padding:20px;color:#fff;margin-bottom:18px;box-shadow:0 8px 24px rgba(123,94,167,.25)}
+.header h1{font-family:'Nunito',sans-serif;font-size:19px;font-weight:900;margin-bottom:5px}
+.header p{font-size:12.5px;opacity:.92;line-height:1.6}
+.panel{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px rgba(123,94,167,.1)}
+.panel h3{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:'Mitr',sans-serif;margin-bottom:8px}
+.btn:active{transform:scale(.98)}
+.btn.export{background:linear-gradient(135deg,#1B8A3A,#00B900)}
+.btn.secondary{background:#F0EBFB;color:var(--purple)}
+.btn-toggle{padding:10px;border:2px solid #F0EBFB;border-radius:12px;background:#fff;color:var(--purple);font-weight:700;font-size:13px;cursor:pointer;font-family:'Mitr',sans-serif;margin-bottom:0}
+.btn-toggle.active{background:#7B5EA7;border-color:#7B5EA7;color:#fff}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#FBF9FF;border-radius:10px;margin-bottom:6px}
+.summary-row .label{font-size:13px;font-weight:700;color:var(--dark)}
+.summary-row .stats{font-size:11.5px;color:var(--gray);text-align:right}
+.summary-row .amt{font-size:15px;font-weight:900;color:#1B8A3A}
+.summary-total{background:linear-gradient(135deg,#7B5EA7,#9B7ED9);color:#fff;border-radius:12px;padding:14px;margin-bottom:12px;text-align:center}
+.summary-total .amt{font-size:26px;font-weight:900;color:#fff}
+.summary-total .label{font-size:12px;opacity:.9}
+.stat-badge{display:inline-block;background:#F0EBFB;color:var(--purple);padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:700;margin-left:6px}
+.round-card{border:2px solid #e8e0f0;border-radius:14px;padding:14px;margin-bottom:10px}
+.round-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.round-card .date{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:var(--purple)}
+.round-card .count{font-size:12px;background:#EFFAF0;color:#1B8A3A;padding:3px 10px;border-radius:20px;font-weight:700}
+.customer-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f0fa;font-size:12.5px}
+.customer-line:last-child{border-bottom:none}
+.customer-line .name{font-weight:600}
+.badge-status{font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:700}
+.badge-status.pending_payment{background:#FFF3E0;color:#B8720A}
+.badge-status.paid{background:#EFFAF0;color:#1B8A3A}
+.badge-status.shipped{background:#E8F0FF;color:#1B4A9A}
+.badge-status.cancelled{background:#f0f0f0;color:var(--gray)}
+.empty{text-align:center;padding:20px 10px;color:var(--gray);font-size:13px}
+</style>
+</head>
+<body>
+<style>
+.mj-nav-toggle{position:fixed;top:12px;left:12px;z-index:1001;width:46px;height:46px;border-radius:50%;border:none;background:#7B5EA7;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(123,94,167,.4);display:flex;align-items:center;justify-content:center}
+.mj-nav-backdrop{display:none;position:fixed;inset:0;background:rgba(45,34,51,.4);z-index:999}
+.mj-nav-backdrop.open{display:block}
+.mj-admin-nav{position:fixed;top:0;left:0;height:100vh;width:230px;display:flex;flex-direction:column;gap:8px;padding:70px 14px 14px;background:#FBF9FF;border-right:2px solid #F0EBFB;z-index:1000;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto}
+.mj-admin-nav.open{transform:translateX(0)}
+.mj-admin-nav a{padding:11px 14px;background:#fff;border:2px solid #F0EBFB;border-radius:12px;text-decoration:none;color:#333;font-weight:700;font-size:13px;white-space:nowrap}
+.mj-admin-nav a.active{background:#7B5EA7;border-color:#7B5EA7;color:#fff}
+</style>
+<button class="mj-nav-toggle" onclick="toggleAdminNav()" aria-label="เมนู">☰</button>
+<div class="mj-nav-backdrop" id="navBackdrop" onclick="closeAdminNav()"></div>
+<div class="mj-admin-nav" id="adminNav">
+  <a href="admin-login.html">🏠 หน้าแรก</a>
+  <a href="tracking-admin.html">📮 แทร็กกิ้ง</a>
+  <a href="rounds-admin.html">⚙️ รอบจอง</a>
+  <a href="orders-admin.html" class="active">📊 ออเดอร์</a>
+  <a href="customers-admin.html">👥 ลูกค้า</a>
+  <a href="promo-admin.html">🎟️ โปรโมชั่น</a>
+  <a href="admin-log.html">📋 ประวัติ</a>
+</div>
+
+<div class="wrap">
+  <div class="header">
+    <h1>📊 ออเดอร์แยกตามรอบ</h1>
+    <p>ดูจำนวนออเดอร์ + รายชื่อลูกค้าแต่ละรอบ พร้อม Export เป็นไฟล์เปิดใน Google Sheets ได้เลย</p>
+  </div>
+
+  <div class="panel">
+    <div style="background:#EFFAF0;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#1B8A3A;font-weight:700">
+      👤 กำลังใช้งานในนาม: <span id="loggedInAsName">กำลังตรวจสอบ...</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button class="btn secondary" onclick="loadOrders()">🔄 รีเฟรชข้อมูล</button>
+    <button class="btn" style="background:linear-gradient(135deg,#7B5EA7,#9B7ED9);margin-top:8px" onclick="toggleSalesSummary()">📈 สรุปยอดขาย (ต่อรอบ / ต่อเดือน)</button>
+    <button class="btn" style="background:linear-gradient(135deg,#1B8A3A,#4CAF50);margin-top:8px" onclick="toggleShippingSummary()">📦 สรุปที่อยู่จัดส่งแยกตามรอบ</button>
+    <button class="btn export" onclick="exportToCSV()">📥 Export เป็น CSV (เปิดใน Google Sheets)</button>
+    <button class="btn export" style="background:linear-gradient(135deg,#C0392B,#E74C3C);margin-top:8px" onclick="exportToPDF()">📄 Export เป็น PDF</button>
+    <div class="sub" style="margin-bottom:0">
+      ดาวน์โหลดไฟล์แล้ว → เปิด Google Sheets → File → Import → อัปโหลดไฟล์นี้ได้เลย
+      (หรือลากไฟล์ไปวางในหน้า Google Sheets ก็ได้เช่นกัน)
+    </div>
+  </div>
+
+  <div class="panel" id="salesSummaryPanel" style="display:none;border:2px solid #7B5EA7">
+    <h3>📈 สรุปยอดขาย</h3>
+    <div class="sub" style="margin-bottom:10px">นับเฉพาะออเดอร์ที่ชำระเงินแล้วขึ้นไป (ไม่รวมที่ยังรอชำระ/ยกเลิก) ให้เป็นยอดขายจริง</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn-toggle active" id="summaryTabRound" onclick="switchSummaryTab('round')" style="flex:1">ตามรอบ</button>
+      <button class="btn-toggle" id="summaryTabMonth" onclick="switchSummaryTab('month')" style="flex:1">ตามเดือน</button>
+    </div>
+    <div id="salesSummaryContent"><div class="empty">กำลังคำนวณ...</div></div>
+    <button class="btn export" style="background:linear-gradient(135deg,#C0392B,#E74C3C);margin-top:12px" onclick="exportSalesSummaryToPDF()">📄 Export สรุปยอดขายเป็น PDF</button>
+  </div>
+
+  <div class="panel" id="shippingSummaryPanel" style="display:none;border:2px solid #1B8A3A">
+    <h3>📦 สรุปที่อยู่จัดส่งแยกตามรอบ</h3>
+    <div class="sub" style="margin-bottom:10px">รวมชื่อ / เบอร์โทร / ที่อยู่ / วิธีจัดส่ง ของทุกออเดอร์ที่ชำระเงินแล้ว เอาไว้เตรียมพัสดุได้เลย (ไม่รวมออเดอร์ที่ยังไม่จ่าย/ยกเลิก)</div>
+    <div id="shippingSummaryContent"><div class="empty">กำลังคำนวณ...</div></div>
+    <button class="btn export" style="background:linear-gradient(135deg,#C0392B,#E74C3C);margin-top:12px" onclick="exportShippingSummaryToPDF()">📄 Export ที่อยู่จัดส่งเป็น PDF</button>
+  </div>
+
+  <div class="panel">
+    <h3>สรุปแต่ละรอบ <span class="stat-badge" id="totalBadge" style="display:none"></span></h3>
+    <div id="roundsList"><div class="empty">กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ Popup ย้ายรอบออเดอร์ ═══════════ -->
+<div id="moveRoundOverlay" style="display:none;position:fixed;inset:0;background:rgba(45,34,51,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:20px;max-width:360px;width:100%;padding:22px;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 4px">🔄 ย้ายรอบออเดอร์</h3>
+    <div class="sub" id="moveRoundOrderLabel" style="margin-bottom:14px"></div>
+    <label style="font-size:12.5px;font-weight:700;color:var(--dark)">เลือกรอบปลายทาง</label>
+    <select id="moveRoundSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid #eee;margin:6px 0 16px;font-family:'Mitr',sans-serif"></select>
+    <div style="display:flex;gap:8px">
+      <button class="btn secondary" style="flex:1" onclick="closeMoveRoundDialog()">ยกเลิก</button>
+      <button class="btn" style="flex:1;background:linear-gradient(135deg,#E65100,#FF9800)" onclick="confirmMoveRound()">ย้ายรอบเลย</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ Popup สร้างส่วนลดเฉพาะรายบุคคล ═══════════ -->
+<div id="personalDiscountOverlay" style="display:none;position:fixed;inset:0;background:rgba(45,34,51,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:20px;max-width:360px;width:100%;padding:22px;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 4px">🎁 สร้างส่วนลดเฉพาะบุคคล</h3>
+    <div class="sub" id="personalDiscountCustomerLabel" style="margin-bottom:14px"></div>
+
+    <label style="font-size:12.5px;font-weight:700;color:var(--dark)">จำนวนส่วนลด (บาท)</label>
+    <input type="number" id="personalDiscountAmount" min="1" value="20" style="width:100%;padding:10px;border-radius:10px;border:1px solid #eee;margin:6px 0 14px;font-family:'Mitr',sans-serif">
+
+    <label style="font-size:12.5px;font-weight:700;color:var(--dark)">ใช้ได้กี่วัน (นับจากวันนี้ — สูงสุด 90 วัน / 3 เดือน)</label>
+    <input type="number" id="personalDiscountDays" min="1" max="90" value="30" style="width:100%;padding:10px;border-radius:10px;border:1px solid #eee;margin:6px 0 14px;font-family:'Mitr',sans-serif">
+
+    <label style="font-size:12.5px;font-weight:700;color:var(--dark)">หมายเหตุ (ไม่บังคับ — ไว้เตือนตัวเองว่าทำไมให้ส่วนลดนี้)</label>
+    <input type="text" id="personalDiscountNote" placeholder="เช่น ขอโทษที่สินค้าล่าช้า" style="width:100%;padding:10px;border-radius:10px;border:1px solid #eee;margin:6px 0 16px;font-family:'Mitr',sans-serif">
+
+    <div class="sub" style="margin-bottom:14px;font-size:11.5px">ระบบจะส่งโค้ดส่วนลดพร้อมลิงก์กดรับอัตโนมัติไปหาลูกค้าทาง LINE ทันทีค่ะ</div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn secondary" style="flex:1" onclick="closePersonalDiscountDialog()">ยกเลิก</button>
+      <button class="btn" style="flex:1;background:linear-gradient(135deg,#7B1FA2,#AB47BC)" onclick="confirmPersonalDiscount()">สร้างและส่งเลย</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleAdminNav(){
+    document.getElementById('adminNav').classList.toggle('open');
+    document.getElementById('navBackdrop').classList.toggle('open');
+  }
+  function closeAdminNav(){
+    document.getElementById('adminNav').classList.remove('open');
+    document.getElementById('navBackdrop').classList.remove('open');
+  }
+
+  const API_BASE = 'https://monly-jelly-application.vercel.app';
+  let allOrders = [];
+
+  function getAdminToken() { return localStorage.getItem('mj_admin_token'); }
+
+  const STATUS_LABELS = {
+    pending_payment: 'รอชำระเงิน',
+    paid: 'ชำระแล้ว',
+    shipped: 'จัดส่งแล้ว',
+    cancelled: 'ยกเลิก',
+  };
+
+  // เช็คว่า Login อยู่จริงไหมตอนเปิดหน้านี้
+  (async () => {
+    const token = getAdminToken();
+    if (!token) { window.location.href = 'admin-login.html'; return; }
+    try {
+      const res = await fetch(`${API_BASE}/api/admin-auth?action=verify`, {
+        headers: { 'x-admin-session': token },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) { window.location.href = 'admin-login.html'; return; }
+      document.getElementById('loggedInAsName').textContent = data.name;
+      loadOrders();
+    } catch (e) { window.location.href = 'admin-login.html'; }
+  })();
+
+  // จัดกลุ่มออเดอร์ตามรอบ คืนเป็น array เรียงตามวันที่ล่าสุดก่อน
+  // ── สรุปยอดขาย: นับเฉพาะออเดอร์ที่ชำระเงินแล้วขึ้นไป (paid/shipped) ──
+  // ไม่นับ pending_payment (ยังไม่ได้จ่ายจริง) และ cancelled (ยกเลิกไปแล้ว)
+  // เพื่อให้เป็น "ยอดขายจริง" ไม่ใช่แค่ยอดที่มีคนสั่งเข้ามา
+  const SALES_COUNTED_STATUSES = ['paid', 'shipped'];
+
+  function toggleSalesSummary() {
+    const panel = document.getElementById('salesSummaryPanel');
+    const isShowing = panel.style.display !== 'none';
+    panel.style.display = isShowing ? 'none' : 'block';
+    if (!isShowing) renderSalesSummary(currentSummaryTab);
+  }
+
+  let currentSummaryTab = 'round';
+  function switchSummaryTab(tab) {
+    currentSummaryTab = tab;
+    document.getElementById('summaryTabRound').classList.toggle('active', tab === 'round');
+    document.getElementById('summaryTabMonth').classList.toggle('active', tab === 'month');
+    renderSalesSummary(tab);
+  }
+
+  // ── สรุปที่อยู่จัดส่งแยกตามรอบ ──
+  function toggleShippingSummary() {
+    const panel = document.getElementById('shippingSummaryPanel');
+    const isShowing = panel.style.display !== 'none';
+    panel.style.display = isShowing ? 'none' : 'block';
+    if (!isShowing) renderShippingSummary();
+  }
+
+  // สร้างข้อมูลจัดกลุ่มตามรอบ ใช้ร่วมกันทั้งตอนแสดงบนจอและตอน export PDF
+  function buildShippingGroups() {
+    const soldOrders = allOrders.filter((o) => SALES_COUNTED_STATUSES.includes(o.status));
+    const groups = {};
+    for (const o of soldOrders) {
+      const key = (o.round && o.round.id) || 'ไม่ระบุรอบ';
+      const label = (o.round && o.round.date) || 'ไม่ระบุรอบ';
+      if (!groups[key]) groups[key] = { label, sortKey: key, customers: [] };
+      groups[key].customers.push({
+        name: (o.customer && o.customer.name) || 'ไม่ทราบชื่อ',
+        phone: (o.customer && o.customer.phone) || '-',
+        addr: (o.customer && o.customer.addr) || '-',
+        shipping: (o.shipping && o.shipping.name) || '-',
+        orderId: o.orderId,
+        trackingNumber: o.trackingNumber || null,
+        items: o.items || [],
+      });
+    }
+    return Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+  }
+
+  function renderShippingSummary() {
+    const content = document.getElementById('shippingSummaryContent');
+    if (!allOrders.length) {
+      content.innerHTML = '<div class="empty">ยังไม่มีข้อมูลออเดอร์ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ</div>';
+      return;
+    }
+    const sortedGroups = buildShippingGroups();
+    if (sortedGroups.length === 0) {
+      content.innerHTML = '<div class="empty">ยังไม่มีออเดอร์ที่ชำระเงินแล้วเลยค่ะ</div>';
+      return;
+    }
+    content.innerHTML = sortedGroups.map((g) => `
+      <div style="margin-bottom:16px">
+        <div style="font-weight:800;color:#1B8A3A;font-size:14px;margin-bottom:8px">📅 รอบ ${g.label} (${g.customers.length} ที่)</div>
+        ${g.customers.map((c) => `
+          <div style="background:#F4FBF5;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:12.5px">
+            <div style="font-weight:700">${c.name} — ${c.phone}</div>
+            <div style="color:var(--gray);margin-top:2px">🏠 ${c.addr}</div>
+            <div style="color:var(--gray);margin-top:2px">🚚 ${c.shipping}${c.trackingNumber ? ' · 📮 ' + c.trackingNumber : ''} <span style="opacity:.6">(#${c.orderId})</span></div>
+            <div style="background:#fff;border-radius:8px;padding:6px 10px;margin-top:6px;border:1px dashed #C8E6C9">
+              <div style="font-size:10.5px;color:#1B8A3A;font-weight:700;margin-bottom:2px">🍬 รายการที่สั่ง (เช็คก่อนแพ็ค)</div>
+              ${(c.items || []).map((it) => `<div style="display:flex;justify-content:space-between"><span>${it.name}</span><span>×${it.qty}</span></div>`).join('') || '<span style="color:var(--gray)">ไม่มีรายการสินค้า</span>'}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  // ── Export ที่อยู่จัดส่งเป็น PDF (ใช้เทคนิคพิมพ์ผ่านเบราว์เซอร์เอง เหมือนเดิม) ──
+  function exportShippingSummaryToPDF() {
+    if (!allOrders.length) {
+      alert('ยังไม่มีข้อมูลออเดอร์ให้ Export ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ');
+      return;
+    }
+    const sortedGroups = buildShippingGroups();
+    const today = new Date().toISOString().slice(0, 10);
+
+    const sectionsHtml = sortedGroups.map((g) => `
+      <h2>📅 รอบ ${g.label} (${g.customers.length} ที่)</h2>
+      <table>
+        <thead><tr><th>ชื่อ</th><th>เบอร์โทร</th><th>ที่อยู่</th><th>จัดส่ง</th><th>รายการที่สั่ง (เช็คก่อนแพ็ค)</th><th>เลขออเดอร์</th></tr></thead>
+        <tbody>
+          ${g.customers.map((c) => `
+            <tr>
+              <td>${c.name}</td>
+              <td>${c.phone}</td>
+              <td>${c.addr}</td>
+              <td>${c.shipping}${c.trackingNumber ? '<br><span style="font-size:10.5px;color:#666">📮 ' + c.trackingNumber + '</span>' : ''}</td>
+              <td>${(c.items || []).map((it) => `${it.name} ×${it.qty}`).join('<br>') || '-'}</td>
+              <td>${c.orderId}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `).join('');
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <title>ที่อยู่จัดส่ง Monly Jelly - ${today}</title>
+        <style>
+          body{font-family:'Tahoma','Segoe UI',sans-serif;padding:24px;color:#2D2233}
+          h1{font-size:20px;margin-bottom:4px}
+          h2{font-size:15px;color:#1B8A3A;margin:20px 0 8px}
+          .sub{color:#6a5a7a;font-size:13px;margin-bottom:16px}
+          table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px}
+          th{background:#1B8A3A;color:#fff;padding:7px 9px;text-align:left}
+          td{padding:7px 9px;border-bottom:1px solid #eee;vertical-align:top}
+          @media print{ body{padding:0} h2{page-break-before:auto} }
+        </style>
+      </head>
+      <body>
+        <h1>📦 สรุปที่อยู่จัดส่ง Monly Jelly</h1>
+        <div class="sub">Export เมื่อวันที่ ${today} — เฉพาะออเดอร์ที่ชำระเงินแล้ว</div>
+        ${sectionsHtml}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
+  function renderSalesSummary(tab) {
+    const content = document.getElementById('salesSummaryContent');
+    if (!allOrders.length) {
+      content.innerHTML = '<div class="empty">ยังไม่มีข้อมูลออเดอร์ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ</div>';
+      return;
+    }
+
+    const soldOrders = allOrders.filter((o) => SALES_COUNTED_STATUSES.includes(o.status));
+    const grandTotal = soldOrders.reduce((s, o) => s + (o.grandTotal || 0), 0);
+
+    // ── นับจำนวนแต่ละรสที่ขายได้ ทั้งแบบรวมทั้งหมด และแยกตามกลุ่ม (รอบ/เดือน) ──
+    const overallFlavorCounts = {};
+    let groups = {};
+
+    function addFlavorCounts(target, items) {
+      for (const it of items || []) {
+        const name = it.name || 'ไม่ระบุชื่อ';
+        target[name] = (target[name] || 0) + (it.qty || 0);
+      }
+    }
+
+    if (tab === 'round') {
+      for (const o of soldOrders) {
+        const key = (o.round && o.round.id) || 'ไม่ระบุรอบ';
+        const label = (o.round && o.round.date) || 'ไม่ระบุรอบ';
+        if (!groups[key]) groups[key] = { label, count: 0, total: 0, sortKey: key, flavorCounts: {} };
+        groups[key].count++;
+        groups[key].total += o.grandTotal || 0;
+        addFlavorCounts(groups[key].flavorCounts, o.items);
+        addFlavorCounts(overallFlavorCounts, o.items);
+      }
+    } else {
+      // ตามเดือน — ใช้ createdAt ของออเดอร์ (วันที่สั่งจริง) ไม่ใช่วันที่รอบผลิต
+      const monthNamesTH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      for (const o of soldOrders) {
+        const d = o.createdAt ? new Date(o.createdAt) : null;
+        const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : 'ไม่ระบุวันที่';
+        const label = d ? `${monthNamesTH[d.getMonth()]} ${d.getFullYear() + 543}` : 'ไม่ระบุวันที่';
+        if (!groups[key]) groups[key] = { label, count: 0, total: 0, sortKey: key, flavorCounts: {} };
+        groups[key].count++;
+        groups[key].total += o.grandTotal || 0;
+        addFlavorCounts(groups[key].flavorCounts, o.items);
+        addFlavorCounts(overallFlavorCounts, o.items);
+      }
+    }
+
+    const sortedGroups = Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+
+    if (sortedGroups.length === 0) {
+      content.innerHTML = '<div class="empty">ยังไม่มีออเดอร์ที่ชำระเงินแล้วเลยค่ะ</div>';
+      return;
+    }
+
+    // หารสที่ขายดีที่สุดจาก object นับจำนวน (คืนทั้งชื่อ+จำนวน)
+    function topFlavor(flavorCounts) {
+      const entries = Object.entries(flavorCounts);
+      if (entries.length === 0) return null;
+      entries.sort((a, b) => b[1] - a[1]);
+      return { name: entries[0][0], qty: entries[0][1] };
+    }
+
+    // สร้าง HTML แสดงรายละเอียดรสทั้งหมด เรียงจากขายดีไปน้อย
+    function flavorBreakdownHtml(flavorCounts) {
+      const entries = Object.entries(flavorCounts).sort((a, b) => b[1] - a[1]);
+      if (entries.length === 0) return '<span style="color:var(--gray)">ไม่มีรายการสินค้า</span>';
+      return entries.map(([name, qty]) => `<div style="display:flex;justify-content:space-between;padding:1px 0"><span>🍬 ${name}</span><span>×${qty}</span></div>`).join('');
+    }
+
+    const overallTop = topFlavor(overallFlavorCounts);
+
+    content.innerHTML =
+      `<div class="summary-total">
+        <div class="amt">฿${grandTotal.toLocaleString()}</div>
+        <div class="label">ยอดขายรวมทั้งหมด (${soldOrders.length} ออเดอร์)</div>
+        ${overallTop ? `<div class="label" style="margin-top:6px;font-weight:700">🏆 รสขายดีที่สุด: ${overallTop.name} (${overallTop.qty} ชิ้น)</div>` : ''}
+      </div>` +
+      sortedGroups.map((g, idx) => {
+        const top = topFlavor(g.flavorCounts);
+        return `
+        <div class="summary-row" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="document.getElementById('flavorDetail_${idx}').style.display = document.getElementById('flavorDetail_${idx}').style.display === 'none' ? 'block' : 'none'">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="label">${tab === 'round' ? '📅 ' : '🗓️ '}${g.label}</div>
+            <div class="stats">${g.count} ออเดอร์<br><span class="amt">฿${g.total.toLocaleString()}</span></div>
+          </div>
+          ${top ? `<div style="font-size:11.5px;color:#7B5EA7;font-weight:700;margin-top:4px">🏆 ขายดี: ${top.name} (${top.qty} ชิ้น) — แตะเพื่อดูรายละเอียดทั้งหมด</div>` : ''}
+          <div id="flavorDetail_${idx}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;font-size:12px">
+            ${flavorBreakdownHtml(g.flavorCounts)}
+          </div>
+        </div>
+      `;
+      }).join('');
+  }
+
+  // ── Export สรุปยอดขายเป็น PDF (ใช้เทคนิคเดียวกับ exportToPDF — พิมพ์ผ่าน
+  //    เบราว์เซอร์เอง กันปัญหาภาษาไทยเพี้ยนจากไลบรารีสร้าง PDF ทั่วไป) ──
+  function exportSalesSummaryToPDF() {
+    if (!allOrders.length) {
+      alert('ยังไม่มีข้อมูลออเดอร์ให้ Export ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ');
+      return;
+    }
+
+    const soldOrders = allOrders.filter((o) => SALES_COUNTED_STATUSES.includes(o.status));
+    const grandTotal = soldOrders.reduce((s, o) => s + (o.grandTotal || 0), 0);
+    const today = new Date().toISOString().slice(0, 10);
+    const tabLabel = currentSummaryTab === 'round' ? 'แยกตามรอบผลิต' : 'แยกตามเดือน';
+
+    const overallFlavorCounts = {};
+    function addFlavorCounts(target, items) {
+      for (const it of items || []) {
+        const name = it.name || 'ไม่ระบุชื่อ';
+        target[name] = (target[name] || 0) + (it.qty || 0);
+      }
+    }
+    function topFlavor(flavorCounts) {
+      const entries = Object.entries(flavorCounts);
+      if (entries.length === 0) return null;
+      entries.sort((a, b) => b[1] - a[1]);
+      return { name: entries[0][0], qty: entries[0][1] };
+    }
+    function flavorListText(flavorCounts) {
+      const entries = Object.entries(flavorCounts).sort((a, b) => b[1] - a[1]);
+      return entries.map(([name, qty]) => `${name} ×${qty}`).join(', ') || '-';
+    }
+
+    let groups = {};
+    if (currentSummaryTab === 'round') {
+      for (const o of soldOrders) {
+        const key = (o.round && o.round.id) || 'ไม่ระบุรอบ';
+        const label = (o.round && o.round.date) || 'ไม่ระบุรอบ';
+        if (!groups[key]) groups[key] = { label, count: 0, total: 0, sortKey: key, flavorCounts: {} };
+        groups[key].count++;
+        groups[key].total += o.grandTotal || 0;
+        addFlavorCounts(groups[key].flavorCounts, o.items);
+        addFlavorCounts(overallFlavorCounts, o.items);
+      }
+    } else {
+      const monthNamesTH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      for (const o of soldOrders) {
+        const d = o.createdAt ? new Date(o.createdAt) : null;
+        const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : 'ไม่ระบุวันที่';
+        const label = d ? `${monthNamesTH[d.getMonth()]} ${d.getFullYear() + 543}` : 'ไม่ระบุวันที่';
+        if (!groups[key]) groups[key] = { label, count: 0, total: 0, sortKey: key, flavorCounts: {} };
+        groups[key].count++;
+        groups[key].total += o.grandTotal || 0;
+        addFlavorCounts(groups[key].flavorCounts, o.items);
+        addFlavorCounts(overallFlavorCounts, o.items);
+      }
+    }
+    const sortedGroups = Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+    const overallTop = topFlavor(overallFlavorCounts);
+
+    const rowsHtml = sortedGroups.map((g) => {
+      const top = topFlavor(g.flavorCounts);
+      return `
+      <tr>
+        <td>${g.label}</td>
+        <td style="text-align:center">${g.count}</td>
+        <td style="text-align:right">฿${g.total.toLocaleString()}</td>
+        <td>${top ? `🏆 ${top.name} (×${top.qty})` : '-'}</td>
+        <td style="font-size:11px;color:#6a5a7a">${flavorListText(g.flavorCounts)}</td>
+      </tr>
+    `;
+    }).join('');
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <title>สรุปยอดขาย Monly Jelly - ${today}</title>
+        <style>
+          body{font-family:'Tahoma','Segoe UI',sans-serif;padding:24px;color:#2D2233}
+          h1{font-size:20px;margin-bottom:4px}
+          .sub{color:#6a5a7a;font-size:13px;margin-bottom:20px}
+          .total-box{background:#7B5EA7;color:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:20px}
+          .total-box .amt{font-size:28px;font-weight:900}
+          .total-box .lbl{font-size:12px;opacity:.9}
+          table{width:100%;border-collapse:collapse;font-size:12.5px}
+          th{background:#7B5EA7;color:#fff;padding:8px 10px;text-align:left}
+          td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top}
+          @media print{ body{padding:0} }
+        </style>
+      </head>
+      <body>
+        <h1>📈 สรุปยอดขาย Monly Jelly (${tabLabel})</h1>
+        <div class="sub">Export เมื่อวันที่ ${today} — นับเฉพาะออเดอร์ที่ชำระเงินแล้วขึ้นไป</div>
+        <div class="total-box">
+          <div class="amt">฿${grandTotal.toLocaleString()}</div>
+          <div class="lbl">ยอดขายรวมทั้งหมด (${soldOrders.length} ออเดอร์)</div>
+          ${overallTop ? `<div class="lbl" style="margin-top:6px;font-weight:700">🏆 รสขายดีที่สุดโดยรวม: ${overallTop.name} (${overallTop.qty} ชิ้น)</div>` : ''}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>${currentSummaryTab === 'round' ? 'รอบผลิต' : 'เดือน'}</th>
+              <th style="text-align:center">จำนวนออเดอร์</th>
+              <th style="text-align:right">ยอดขาย</th>
+              <th>รสขายดีที่สุด</th>
+              <th>รายละเอียดทุกรส</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
+  function groupByRound(orders) {
+    const groups = {};
+    for (const o of orders) {
+      const roundId = (o.round && o.round.id) || 'ไม่ระบุรอบ';
+      const roundDate = (o.round && o.round.date) || 'ไม่ระบุรอบ';
+      if (!groups[roundId]) groups[roundId] = { roundId, roundDate, orders: [] };
+      groups[roundId].orders.push(o);
+    }
+    return Object.values(groups).sort((a, b) => b.roundId.localeCompare(a.roundId));
+  }
+
+  async function loadOrders() {
+    const listBox = document.getElementById('roundsList');
+    listBox.innerHTML = '<div class="empty">กำลังโหลด...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        headers: { 'x-admin-session': getAdminToken() },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        listBox.innerHTML = `<div class="empty">❌ ${data.error || 'โหลดไม่สำเร็จ'}</div>`;
+        return;
+      }
+
+      allOrders = data.orders || [];
+      document.getElementById('totalBadge').style.display = 'inline-block';
+      document.getElementById('totalBadge').textContent = `ทั้งหมด ${allOrders.length} ออเดอร์`;
+
+      renderRounds(groupByRound(allOrders));
+
+      // ถ้าเปิดแผงสรุปยอดขายค้างอยู่ ให้อัปเดตตัวเลขให้ใหม่ด้วยเลย
+      if (document.getElementById('salesSummaryPanel').style.display !== 'none') {
+        renderSalesSummary(currentSummaryTab);
+      }
+      // เช่นเดียวกับแผงสรุปที่อยู่จัดส่ง
+      if (document.getElementById('shippingSummaryPanel').style.display !== 'none') {
+        renderShippingSummary();
+      }
+    } catch (err) {
+      listBox.innerHTML = `<div class="empty">❌ เชื่อมต่อไม่สำเร็จ: ${err.message}</div>`;
+    }
+  }
+
+  function renderRounds(groups) {
+    const listBox = document.getElementById('roundsList');
+    if (!groups.length) {
+      listBox.innerHTML = '<div class="empty">ยังไม่มีออเดอร์เลยตอนนี้</div>';
+      return;
+    }
+
+    listBox.innerHTML = groups.map((g) => `
+      <div class="round-card">
+        <div class="top">
+          <span class="date">📅 ${g.roundDate}</span>
+          <span class="count">${g.orders.length} ออเดอร์</span>
+        </div>
+        ${g.orders.map((o) => `
+          <div class="customer-line" style="display:block;padding:10px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="name">${(o.customer && o.customer.name) || 'ไม่ทราบชื่อ'}</span>
+              <span class="badge-status ${o.status}">${STATUS_LABELS[o.status] || o.status}</span>
+            </div>
+            <div style="font-size:11px;color:var(--gray);margin:4px 0">
+              #${o.orderId}${o.trackingNumber ? ` · 📮 ${o.trackingNumber}` : ''}
+            </div>
+            <div style="font-size:12.5px;color:var(--dark);margin:6px 0;background:#FBF9FF;border-radius:10px;padding:8px 10px">
+              ${(o.items || []).map((it) => `<div style="display:flex;justify-content:space-between;padding:1px 0"><span>🍬 ${it.name}</span><span>×${it.qty}</span></div>`).join('') || '<span style="color:var(--gray)">ไม่มีรายการสินค้า</span>'}
+            </div>
+            <div style="font-size:12px;color:var(--dark);margin:4px 0;display:flex;justify-content:space-between;align-items:center">
+              <span>${o.shipping ? '🚚 ' + o.shipping.name : ''}</span>
+              <span style="font-weight:800">฿${(o.grandTotal || 0).toLocaleString()}</span>
+            </div>
+            ${o.promoCode ? `
+              <div style="font-size:11px;color:#1B8A3A;margin-bottom:4px">
+                ${o.promoType === 'free_shipping' ? '🚚 ส่งฟรี' : '🎟️ ลด ฿' + (o.discount || 0)} (โค้ด ${o.promoCode})
+              </div>
+            ` : ''}
+            ${o.rating ? `
+              <div style="font-size:12px;color:var(--purple);margin-bottom:4px;background:#F3EEFF;padding:4px 8px;border-radius:8px">
+                ${'⭐'.repeat(o.rating)}${'☆'.repeat(5 - o.rating)}${o.ratingComment ? ` — "${String(o.ratingComment).replace(/</g,'&lt;')}"` : ''}
+              </div>
+            ` : ''}
+            ${renderStatusButtons(o)}
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  // ปุ่มเปลี่ยนสถานะ — โชว์ตามสถานะปัจจุบันของออเดอร์นั้นๆ เท่านั้น
+  // (ป้องกันกดข้ามขั้นตอน เช่น ยังไม่จ่ายเงินแต่กดจัดส่งได้)
+  function renderStatusButtons(o) {
+    if (o.status === 'cancelled') return ''; // จบแล้ว ไม่มีอะไรให้ทำต่อ
+
+    const buttons = [];
+    if (o.status === 'pending_payment') {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','paid')">✅ ยืนยันจ่ายแล้ว</button>`);
+    }
+    if (o.status === 'paid') {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','shipped')">📦 จัดส่งแล้ว</button>`);
+    }
+    if (o.status !== 'shipped') {
+      buttons.push(`<button class="btn-delete" style="flex:1;padding:7px;font-size:11.5px" onclick="updateOrderStatus('${o.orderId}','cancelled')">❌ ยกเลิก</button>`);
+    }
+    buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px;background:#FFF3E0;color:#E65100" onclick="openMoveRoundDialog('${o.orderId}')">🔄 ย้ายรอบ</button>`);
+    if ((o.status === 'paid' || o.status === 'shipped') && o.userId) {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px;background:#FCE4EC;color:#C2185B" onclick="awardLoyaltyPoint('${o.userId}','${(o.customer && o.customer.name) || ''}')">⚡ ให้แต้มสะสม</button>`);
+    }
+    if (o.userId) {
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px;background:#E3F2FD;color:#1565C0" onclick="resendNotification('${o.orderId}')">🔔 ส่งแจ้งเตือนซ้ำ</button>`);
+      buttons.push(`<button class="btn-toggle" style="flex:1;padding:7px;font-size:11.5px;background:#F3E5F5;color:#7B1FA2" onclick="openPersonalDiscountDialog('${o.userId}','${(o.customer && o.customer.name) || ''}')">🎁 สร้างส่วนลดเฉพาะบุคคล</button>`);
+    }
+    if (!buttons.length) return '';
+    return `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">${buttons.join('')}</div>`;
+  }
+
+  async function updateOrderStatus(orderId, newStatus) {
+    let trackingNumber = null;
+
+    if (newStatus === 'shipped') {
+      trackingNumber = prompt(
+        'ใส่เลขพัสดุ (เว้นว่างแล้วกด OK เพื่อดึงเลขจากคลังอัตโนมัติตามขนส่งที่ลูกค้าเลือกไว้):'
+      );
+      if (trackingNumber === null) return; // กดยกเลิก prompt
+    }
+
+    if (newStatus === 'cancelled' && !confirm(`ต้องการยกเลิกออเดอร์ #${orderId} ใช่ไหมคะ? (คืนที่นั่งให้รอบทันที)`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus,
+          ...(trackingNumber ? { trackingNumber } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'อัปเดตไม่สำเร็จ'));
+        return;
+      }
+      loadOrders(); // รีเฟรชรายการให้เห็นสถานะล่าสุดทันที
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // ── ย้ายรอบออเดอร์ไปรอบอื่น (แอดมินเลือกเอง) ──
+  let MOVE_ROUND_ORDER_ID = null;
+  async function openMoveRoundDialog(orderId) {
+    MOVE_ROUND_ORDER_ID = orderId;
+    const order = allOrders.find((o) => o.orderId === orderId);
+    const label = document.getElementById('moveRoundOrderLabel');
+    label.textContent = `#${orderId} — ${(order && order.customer && order.customer.name) || 'ไม่ทราบชื่อ'} (ตอนนี้อยู่รอบ: ${order && order.round ? order.round.date : '-'})`;
+
+    const select = document.getElementById('moveRoundSelect');
+    select.innerHTML = '<option>กำลังโหลดรอบ...</option>';
+    document.getElementById('moveRoundOverlay').style.display = 'flex';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/rounds`);
+      const data = await res.json();
+      const rounds = (data.rounds || []).slice().sort((a, b) => a.id.localeCompare(b.id));
+      select.innerHTML = rounds.map((r) => {
+        const left = r.capacity - r.booked;
+        const isCurrentRound = order && order.round && order.round.id === r.id;
+        return `<option value="${r.id}"${isCurrentRound ? ' selected' : ''}>${r.date} (ว่าง ${left}/${r.capacity})</option>`;
+      }).join('');
+    } catch (e) {
+      select.innerHTML = '<option>โหลดรอบไม่สำเร็จ</option>';
+    }
+  }
+
+  function closeMoveRoundDialog() {
+    document.getElementById('moveRoundOverlay').style.display = 'none';
+    MOVE_ROUND_ORDER_ID = null;
+  }
+
+  async function confirmMoveRound() {
+    const newRoundId = document.getElementById('moveRoundSelect').value;
+    if (!MOVE_ROUND_ORDER_ID || !newRoundId) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ orderId: MOVE_ROUND_ORDER_ID, newRoundId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'ย้ายรอบไม่สำเร็จ'));
+        return;
+      }
+      closeMoveRoundDialog();
+      loadOrders(); // รีเฟรชให้เห็นรอบใหม่ทันที
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // ── ให้แต้มสะสม "พลังงานชีวิต" ย้อนหลังด้วยมือ ──
+  // ใช้ตอนลูกค้าจ่ายเงินสำเร็จจริงแต่ระบบพลาดไม่ได้เพิ่มแต้มให้อัตโนมัติ
+  async function awardLoyaltyPoint(userId, customerName) {
+    if (!confirm(`ให้แต้มสะสม 1 แต้มกับ "${customerName || userId}" เลยไหมคะ?`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/customer/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ action: 'award_loyalty_point' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'ให้แต้มไม่สำเร็จ'));
+        return;
+      }
+      if (data.rewardCreated) {
+        alert(`🎉 ให้แต้มสำเร็จ! และแต้มครบพอดี ระบบออกโค้ดส่วนลด ${data.rewardCreated.discount} บาทให้ลูกค้าอัตโนมัติแล้ว (โค้ด: ${data.rewardCreated.code})`);
+      } else {
+        alert(`✅ ให้แต้มสำเร็จ! ตอนนี้ลูกค้ามี ${data.points}/${data.target} แต้มแล้วค่ะ`);
+      }
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // ── ส่งข้อความแจ้งเตือนซ้ำอีกครั้ง (ตามสถานะปัจจุบันของออเดอร์) ──
+  // ใช้ตอนสงสัยว่าลูกค้าน่าจะไม่เคยได้รับแจ้งเตือนมาก่อน (เช่น ตอนสั่งซื้อ
+  // ยังไม่ได้ login LINE ไว้ แต่ตอนนี้ผูกบัญชีแล้ว)
+  async function resendNotification(orderId) {
+    if (!confirm(`ส่งข้อความแจ้งเตือนซ้ำสำหรับออเดอร์ #${orderId} เลยไหมคะ?`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ orderId, action: 'resend_notification' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'ส่งแจ้งเตือนซ้ำไม่สำเร็จ'));
+        return;
+      }
+      alert('✅ ส่งแจ้งเตือนซ้ำสำเร็จแล้วค่ะ');
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // ── สร้างส่วนลดเฉพาะรายบุคคล ──
+  let PERSONAL_DISCOUNT_USER_ID = null;
+  function openPersonalDiscountDialog(userId, customerName) {
+    PERSONAL_DISCOUNT_USER_ID = userId;
+    document.getElementById('personalDiscountCustomerLabel').textContent = `ให้ส่วนลดกับ: ${customerName || userId}`;
+    document.getElementById('personalDiscountAmount').value = 20;
+    document.getElementById('personalDiscountDays').value = 30;
+    document.getElementById('personalDiscountNote').value = '';
+    document.getElementById('personalDiscountOverlay').style.display = 'flex';
+  }
+
+  function closePersonalDiscountDialog() {
+    document.getElementById('personalDiscountOverlay').style.display = 'none';
+    PERSONAL_DISCOUNT_USER_ID = null;
+  }
+
+  async function confirmPersonalDiscount() {
+    const discount = Number(document.getElementById('personalDiscountAmount').value);
+    const validDays = Number(document.getElementById('personalDiscountDays').value);
+    const note = document.getElementById('personalDiscountNote').value.trim();
+    if (!PERSONAL_DISCOUNT_USER_ID || !discount || discount <= 0) {
+      alert('กรุณาระบุจำนวนส่วนลดให้ถูกต้องค่ะ');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/customer/${PERSONAL_DISCOUNT_USER_ID}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': getAdminToken() },
+        body: JSON.stringify({ action: 'create_personal_discount', discount, validDays, note }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'สร้างส่วนลดไม่สำเร็จ'));
+        return;
+      }
+      closePersonalDiscountDialog();
+      alert(`✅ สร้างส่วนลด ${discount} บาทสำเร็จแล้ว! ส่งแจ้งเตือนไปหาลูกค้าทาง LINE เรียบร้อยค่ะ\n\nโค้ด: ${data.code}`);
+    } catch (err) {
+      alert('❌ เชื่อมต่อไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // แปลงข้อความให้ปลอดภัยสำหรับใส่ใน CSV (กันกรณีชื่อมีจุลภาค/เครื่องหมายคำพูดปน)
+  function csvEscape(value) {
+    const str = String(value ?? '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function exportToCSV() {
+    if (!allOrders.length) {
+      alert('ยังไม่มีข้อมูลออเดอร์ให้ Export ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ');
+      return;
+    }
+
+    const groups = groupByRound(allOrders);
+
+    // แถวหัวตาราง
+    const rows = [
+      ['วันที่รอบ', 'จำนวนออเดอร์ในรอบ', 'เลขออเดอร์', 'ชื่อลูกค้า', 'เบอร์โทร', 'สถานะ', 'ยอดเงิน (บาท)'],
+    ];
+
+    for (const g of groups) {
+      g.orders.forEach((o, idx) => {
+        rows.push([
+          idx === 0 ? g.roundDate : '',              // โชว์วันที่รอบแค่แถวแรกของกลุ่ม (อ่านง่ายขึ้น)
+          idx === 0 ? g.orders.length : '',           // โชว์จำนวนรวมแค่แถวแรกของกลุ่ม
+          o.orderId || '',
+          (o.customer && o.customer.name) || '',
+          (o.customer && o.customer.phone) || '',
+          STATUS_LABELS[o.status] || o.status || '',
+          o.grandTotal || 0,
+        ]);
+      });
+    }
+
+    const csvContent = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
+
+    // ใส่ BOM (\uFEFF) นำหน้า กันปัญหาภาษาไทยเพี้ยนตอนเปิดใน Excel/Google Sheets
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `monly-jelly-orders-${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Export เป็น PDF — ใช้ระบบ "พิมพ์" ของเบราว์เซอร์เองแทนไลบรารี PDF ──
+  // (กันปัญหาภาษาไทยเพี้ยน/เป็นสี่เหลี่ยม ที่มักเจอกับไลบรารีสร้าง PDF ทั่วไป
+  // เพราะไม่รองรับฟอนต์ไทยโดยตรง ต้องฝังฟอนต์เพิ่มเอง — วิธีนี้ใช้เบราว์เซอร์
+  // render ข้อความเองตามปกติ ภาษาไทยเลยแสดงผลถูกต้อง 100% ไม่มีปัญหา)
+  function exportToPDF() {
+    if (!allOrders.length) {
+      alert('ยังไม่มีข้อมูลออเดอร์ให้ Export ค่ะ กด "รีเฟรชข้อมูล" ก่อนนะคะ');
+      return;
+    }
+
+    const groups = groupByRound(allOrders);
+    const today = new Date().toISOString().slice(0, 10);
+
+    let rowsHtml = '';
+    for (const g of groups) {
+      rowsHtml += `<tr class="round-header-row"><td colspan="5">📅 รอบ ${g.roundDate} (${g.orders.length} ออเดอร์)</td></tr>`;
+      g.orders.forEach((o) => {
+        rowsHtml += `<tr>
+          <td>${o.orderId || ''}</td>
+          <td>${(o.customer && o.customer.name) || ''}</td>
+          <td>${(o.customer && o.customer.phone) || ''}</td>
+          <td>${STATUS_LABELS[o.status] || o.status || ''}</td>
+          <td style="text-align:right">฿${(o.grandTotal || 0).toLocaleString()}</td>
+        </tr>`;
+      });
+    }
+
+    const grandTotalAll = allOrders.reduce((s, o) => s + (o.grandTotal || 0), 0);
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <title>รายการออเดอร์ Monly Jelly - ${today}</title>
+        <style>
+          body{font-family:'Tahoma','Segoe UI',sans-serif;padding:24px;color:#2D2233}
+          h1{font-size:20px;margin-bottom:4px}
+          .sub{color:#6a5a7a;font-size:13px;margin-bottom:20px}
+          table{width:100%;border-collapse:collapse;font-size:12.5px}
+          th{background:#7B5EA7;color:#fff;padding:8px 10px;text-align:left}
+          td{padding:7px 10px;border-bottom:1px solid #eee}
+          .round-header-row td{background:#FBF3F7;font-weight:700;color:#7B5EA7}
+          .total-row td{font-weight:900;border-top:2px solid #7B5EA7;padding-top:10px}
+          @media print{ body{padding:0} }
+        </style>
+      </head>
+      <body>
+        <h1>🍓 รายการออเดอร์ Monly Jelly</h1>
+        <div class="sub">Export เมื่อวันที่ ${today} — รวมทั้งหมด ${allOrders.length} ออเดอร์</div>
+        <table>
+          <thead>
+            <tr><th>เลขออเดอร์</th><th>ชื่อลูกค้า</th><th>เบอร์โทร</th><th>สถานะ</th><th style="text-align:right">ยอดเงิน</th></tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+            <tr class="total-row"><td colspan="4">ยอดรวมทั้งหมด</td><td style="text-align:right">฿${grandTotalAll.toLocaleString()}</td></tr>
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // รอให้เนื้อหาโหลดเสร็จก่อนค่อยเปิดหน้าต่างพิมพ์ (กันพิมพ์หน้าเปล่า)
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+</script>
+</body>
+</html>
