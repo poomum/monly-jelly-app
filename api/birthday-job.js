@@ -1,0 +1,287 @@
+// ═══════════════════════════════════════════════════════════════
+// Monly Jelly – Birthday Job (Daily Cron)
+// วางไฟล์นี้ที่: /api/birthday-job.js
+// ทำงานทุกวัน 00:00 UTC (ตั้งค่า Vercel Cron)
+// ═══════════════════════════════════════════════════════════════
+
+const { createClient } = require("@vercel/kv");
+const kv = createClient({
+  url:
+    process.env.KV_REST_API_URL ||
+    process.env.kv_KV_REST_API_URL ||
+    process.env.STORAGE_KV_REST_API_URL,
+  token:
+    process.env.KV_REST_API_TOKEN ||
+    process.env.kv_KV_REST_API_TOKEN ||
+    process.env.STORAGE_KV_REST_API_TOKEN,
+});
+
+const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+const { getAllPromotions, savePromotions, generateUniquePromoCode, getThailandDateString } = require("../lib/promotions");
+
+// ส่ง LINE notification
+async function sendLineNotification(userId, message) {
+  if (!LINE_CHANNEL_ACCESS_TOKEN) {
+    console.warn("LINE token not configured");
+    return;
+  }
+
+  try {
+    // หมายเหตุ: นี่ต้องใช้ LINE Bot API จริง ต้องระบุ userId
+    // ตามหลักการ LINE Push API
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        to: userId,
+        messages: [
+          {
+            type: "text",
+            text: message,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to send LINE notification:", response.statusText);
+    }
+  } catch (err) {
+    console.error("Error sending LINE notification:", err);
+  }
+}
+
+// ตรวจวันเกิดและสร้างคูปอง
+async function processbirthdays() {
+  console.log("🎂 Starting birthday check...");
+
+  try {
+    // ดึงรายชื่อลูกค้าทั้งหมด
+    const customersIndex = await kv.smembers("customers:index");
+    if (!customersIndex || customersIndex.length === 0) {
+      console.log("No customers found");
+      return { processed: 0, created: 0 };
+    }
+
+    // ใช้วันที่ตามเวลาไทยเสมอ (ไม่พึ่งแค่จังหวะที่ cron รันตรงกับ UTC เที่ยงคืนพอดี)
+    // เผื่อมีใครสั่งรันฟังก์ชันนี้เองนอกเวลา cron ปกติ จะได้ยังจับวันเกิดถูกวันอยู่ดี
+    const todayMonthDay = getThailandDateString().slice(5); // "MM-DD" จากรูปแบบ YYYY-MM-DD
+
+    // ── ขั้นที่ 1: ดึงข้อมูลลูกค้าทั้งหมดแบบขนาน (เร็วขึ้นมาก รองรับลูกค้าหลักพันคนได้)
+    //    แบ่งเป็นชุดๆ ละ 50 คน กันยิง request พร้อมกันเยอะเกินไปจนฐานข้อมูลโอเวอร์โหลด
+    const BATCH_SIZE = 50;
+    const customersWithBirthdayToday = [];
+
+    for (let i = 0; i < customersIndex.length; i += BATCH_SIZE) {
+      const batch = customersIndex.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        batch.map(async (userId) => {
+          try {
+            const customerData = await kv.get(`customer:${userId}`);
+            if (!customerData) return null;
+            const customer = typeof customerData === "string"
+              ? JSON.parse(customerData)
+              : customerData;
+            if (!customer.birthday) return null;
+            const [, month, day] = customer.birthday.split("-");
+            if (`${month}-${day}` !== todayMonthDay) return null;
+            return { userId, customer };
+          } catch (e) {
+            console.error(`Error checking ${userId}:`, e);
+            return null;
+          }
+        })
+      );
+      for (const r of results) if (r) customersWithBirthdayToday.push(r);
+    }
+
+    let processed = 0;
+    let created = 0;
+
+    // ── ขั้นที่ 2: สร้างคูปอง + ส่ง LINE ให้เฉพาะคนที่วันเกิดตรงวันนี้เท่านั้น
+    //    (จำนวนคนกลุ่มนี้ปกติน้อยมาก ทำทีละคนแบบเดิมได้ ไม่กระทบความเร็ว)
+    for (const { userId, customer } of customersWithBirthdayToday) {
+      try {
+        console.log(`🎂 Birthday found: ${customer.name} (${userId})`);
+
+          // ตรวจว่ายังไม่ได้สร้างคูปองวันนี้
+          const couponsData = await kv.get(`coupons:${userId}`);
+          const coupons = couponsData 
+            ? (typeof couponsData === "string" 
+              ? JSON.parse(couponsData) 
+              : couponsData)
+            : [];
+
+          const todayDate = getThailandDateString();
+          // สำคัญ: เช็คเฉพาะ "คูปองวันเกิด" เท่านั้น (source ไม่ใช่ loyalty/game)
+          // ไม่งั้นถ้าลูกค้าเล่นเกมหรือได้รางวัลสะสมแต้มในวันเกิดตัวเองพอดี
+          // ระบบจะเข้าใจผิดว่า "มีคูปองสร้างวันนี้แล้ว" แล้วข้ามไม่ออกคูปองวันเกิดให้เลย
+          const alreadyCreated = coupons.some(
+            (c) => (!c.source || c.source === "birthday") && getThailandDateString(c.createdAt) === todayDate
+          );
+
+          if (!alreadyCreated) {
+            // ใช้ค่าที่ลูกค้าตั้งไว้ล่วงหน้า ถ้าไม่มี → ใช้ค่า default
+            const theme = customer.couponTheme || "pastel-rainbow";
+            const greeting = customer.couponGreeting || `🎂 Happy Birthday, ${customer.name}!`;
+            const fontSize = customer.couponFontSize || "medium";
+            const textColor = customer.couponTextColor || "";
+            const fontFamily = customer.couponFontFamily || "'Mitr',sans-serif";
+            const decorations = Array.isArray(customer.couponDecorations) ? customer.couponDecorations : [];
+            const couponId = `cpn-birthday-${userId}-${Date.now()}`;
+
+            // ── สร้างโค้ดส่วนลดก่อน แล้วลงทะเบียนเข้าระบบโปรโมชั่นกลาง ──
+            // (รวมเป็นระบบเดียวกับโปรโมชั่นทั่วไป) ล็อกไว้ว่าใช้ได้เฉพาะ
+            // เจ้าของคูปองคนนี้เท่านั้น ใช้ได้แค่ 1 ครั้ง หมดอายุใน 3 เดือน
+            // (ให้เวลาลืมใช้ตอนวันเกิดจริงได้บ้าง) — ถ้าหมดอายุแล้วไม่ได้ใช้
+            // เลย ต้องรอวันเกิดรอบถัดไปถึงจะได้คูปองใหม่ (ระบบเช็คจากวันที่
+            // สร้างคูปองครั้งล่าสุด ไม่ใช่จากวันหมดอายุ จึงออกให้ปีละ 1 ครั้ง
+            // เท่านั้นอยู่แล้วโดยธรรมชาติ ไม่ต้องแก้จุดอื่นเพิ่ม)
+            const promoCode = await generateUniquePromoCode("BDAY");
+            const expiresIn3Months = new Date();
+            expiresIn3Months.setMonth(expiresIn3Months.getMonth() + 3);
+
+            const promotions = await getAllPromotions();
+            promotions.push({
+              code: promoCode,
+              type: "fixed",
+              value: 20,
+              startDate: null,
+              endDate: expiresIn3Months.toISOString().slice(0, 10),
+              minOrderValue: 0,
+              maxUses: 1,
+              usedCount: 0,
+              active: true,
+              restrictedToUserId: userId,     // ใช้ได้เฉพาะเจ้าของคนนี้
+              linkedCouponId: couponId,       // ไว้ sync สถานะ "ใช้แล้ว" กลับไปที่คูปอง
+              createdAt: new Date().toISOString(),
+              createdBy: "ระบบอัตโนมัติ (วันเกิด)",
+            });
+            await savePromotions(promotions);
+
+            const coupon = {
+              id: couponId,
+              userId,
+              source: "birthday", // ระบุชัดเจน แยกจาก loyalty/game ที่อยู่ใน array เดียวกัน
+              theme,
+              greeting,
+              fontSize,
+              textColor,
+              fontFamily,
+              decorations,
+              profileImg: customer.avatar || "",
+              createdAt: new Date().toISOString(),
+              expiresAt: expiresIn3Months.toISOString(), // ให้ตรงกับ endDate ของโปรโมชั่นเป๊ะ หน้าเว็บจะได้แสดงวันหมดอายุถูกต้อง
+              usedAt: null,
+              usedInOrderId: null,
+              auto_generated: true, // ← ทำเครื่องหมายว่าสร้างอัตโนมัติ
+              code: promoCode,      // โค้ดที่ลูกค้าใช้กรอกตอนสั่งซื้อ
+            };
+
+            coupons.push(coupon);
+            await kv.set(`coupons:${userId}`, JSON.stringify(coupons));
+
+            // ส่ง LINE notification (บอกโค้ดที่ใช้กรอกตอนสั่งซื้อจริงๆ)
+            const decoLine = decorations.length ? `${decorations.join(" ")}\n\n` : "";
+            const message = `${decoLine}🎉 วันเกิดสุขสันต์ ${customer.name}! 🎂\n\nคุณได้รับส่วนลด 20 บาท!\n\n🎟️ โค้ด: ${promoCode}\nใช้ได้ภายใน 3 เดือน (ใช้ได้ 1 ครั้ง)\n\nนำโค้ดนี้ไปกรอกในช่อง "โค้ดส่วนลด" ตอนสั่งซื้อได้เลยค่ะ 💚`;
+            await sendLineNotification(userId, message);
+
+            created++;
+            console.log(`✅ Coupon created for ${customer.name} (code: ${promoCode})`);
+          } else {
+            console.log(`⏭️ Coupon already created today for ${customer.name}`);
+          }
+
+          processed++;
+      } catch (err) {
+        console.error(`Error processing ${userId}:`, err);
+      }
+    }
+
+    console.log(`✅ Birthday check completed: ${processed} processed, ${created} coupons created`);
+    return { processed, created };
+  } catch (err) {
+    console.error("Birthday job error:", err);
+    throw err;
+  }
+}
+
+// Vercel Cron handler
+// ── เตือนก่อน SlipOK หมดอายุ ──
+// เช็ควันต่ออายุที่แอดมินตั้งไว้เอง (ผ่าน environment variable SLIPOK_RENEWAL_DATE
+// รูปแบบ YYYY-MM-DD เช่น "2026-09-12") เทียบกับวันนี้ ถ้าเหลือ 5 วันหรือน้อยกว่า
+// ให้ส่งเตือนแอดมินทาง LINE — ถ้าไม่ได้ตั้งค่าตัวแปรนี้ไว้เลย จะข้ามการเช็คนี้ไป
+// เฉยๆ ไม่ error อะไร (เป็นฟีเจอร์เสริม ไม่ใช่สิ่งที่บังคับต้องตั้งค่า)
+async function checkSlipOkRenewalReminder() {
+  const renewalDateStr = process.env.SLIPOK_RENEWAL_DATE;
+  if (!renewalDateStr) return { checked: false, reason: "ไม่ได้ตั้งค่า SLIPOK_RENEWAL_DATE ไว้" };
+
+  const today = getThailandDateString();
+  const daysUntilRenewal = Math.ceil((new Date(renewalDateStr) - new Date(today)) / (1000 * 60 * 60 * 24));
+
+  // เตือนแค่ตอนเหลือ 5 วันหรือน้อยกว่า (แต่ยังไม่ติดลบเกินไป กันเตือนซ้ำไปเรื่อยๆ
+  // ทุกวันหลังจากวันที่ตั้งไว้ผ่านไปแล้วนานมาก)
+  if (daysUntilRenewal > 5 || daysUntilRenewal < -3) {
+    return { checked: true, daysUntilRenewal, alerted: false };
+  }
+
+  // กันเตือนซ้ำวันเดียวกัน (เผื่อ cron รันมากกว่า 1 ครั้งต่อวันด้วยเหตุผลใดก็ตาม)
+  const alertedTodayKey = `slipok:renewal-reminder-sent:${today}`;
+  const alreadySentToday = await kv.get(alertedTodayKey);
+  if (alreadySentToday) return { checked: true, daysUntilRenewal, alerted: false, reason: "เตือนไปแล้ววันนี้" };
+
+  const adminLineIds = (process.env.ADMIN_LINE_USER_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (LINE_CHANNEL_ACCESS_TOKEN && adminLineIds.length > 0) {
+    const urgencyEmoji = daysUntilRenewal <= 0 ? "🔴" : daysUntilRenewal <= 2 ? "🟠" : "🟡";
+    const daysText = daysUntilRenewal <= 0
+      ? `หมดอายุไปแล้ว ${Math.abs(daysUntilRenewal)} วัน`
+      : `เหลืออีก ${daysUntilRenewal} วัน`;
+    const reminderText =
+      `${urgencyEmoji} แจ้งเตือนต่ออายุ SlipOK\n\n` +
+      `แพ็กเกจ SlipOK จะ${daysText} (วันที่ตั้งไว้: ${renewalDateStr})\n\n` +
+      `👉 อย่าลืมเข้าไปต่ออายุที่ slipok.com นะคะ ไม่งั้นลูกค้าจะแนบสลิปแล้วตรวจสอบอัตโนมัติไม่ได้`;
+    for (const adminId of adminLineIds) {
+      await sendLineNotification(adminId, reminderText);
+    }
+    await kv.set(alertedTodayKey, "1", { ex: 60 * 60 * 24 * 2 }); // เก็บไว้ 2 วันพอ
+  }
+  return { checked: true, daysUntilRenewal, alerted: true };
+}
+
+module.exports = async (req, res) => {
+  // ยืนยันว่า request มาจาก Vercel Cron จริง โดยใช้ CRON_SECRET
+  // (วิธีทางการที่ Vercel เอกสารแนะนำ — Vercel จะส่ง Authorization: Bearer <CRON_SECRET>
+  //  มาให้อัตโนมัติ ถ้าตั้งค่าตัวแปร CRON_SECRET ไว้ใน Environment Variables)
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = req.headers["authorization"];
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+  }
+  // หมายเหตุ: ถ้ายังไม่ได้ตั้งค่า CRON_SECRET ไว้ จะข้ามการเช็คนี้ไปเลย
+  // (ใช้งานได้ปกติ แต่แนะนำให้ตั้งค่าไว้เพื่อความปลอดภัย กันคนนอกยิง request มาเรียกเอง)
+
+  try {
+    const result = await processbirthdays();
+    const slipOkReminder = await checkSlipOkRenewalReminder().catch((e) => {
+      console.error("SlipOK renewal reminder check failed:", e);
+      return { checked: false, error: e.message };
+    });
+    res.status(200).json({
+      success: true,
+      message: "Birthday job completed",
+      ...result,
+      slipOkReminder,
+    });
+  } catch (err) {
+    console.error("Birthday job error:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
