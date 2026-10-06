@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>🎟️ คูปองของฉัน - Monly Jelly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--pink:#FF6B9D;--pink2:#FF9DC0;--purple:#7B5EA7;--purple2:#A07ED0;--dark:#2D2233;--gray:#6a5a7a;--gold:#D4A017;}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html,body{min-height:100vh;font-family:'Mitr',sans-serif;color:var(--dark)}
+    body {
+      background: linear-gradient(160deg,
+        #FFD1E3 0%, #FFE8C2 14%, #FFF6BF 28%, #D3F5D0 42%,
+        #C3F0E0 58%, #D6E8FA 72%, #E5D4F7 86%, #FFD1E3 100%
+      );
+      background-size: 300% 300%;
+      animation: rainbowShift 12s ease infinite;
+      padding: 20px;
+    }
+    @keyframes rainbowShift{
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(45,34,51,0.25);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
+      color: #fff;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      font-family:'Nunito',sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .content {
+      padding: 20px;
+    }
+
+    /* ── แท่งพลังงานชีวิต (ระบบสะสมแต้ม) ── */
+    .energy-box {
+      background: #FBF9FF;
+      border: 2px solid #F0EBFB;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 22px;
+    }
+    .energy-box-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .energy-box-title {
+      font-family:'Nunito',sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+      color: var(--dark);
+    }
+    .energy-box-count {
+      font-family:'Nunito',sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--purple);
+    }
+    .energy-bar-track {
+      width: 100%;
+      height: 18px;
+      background: #F0EBFB;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .energy-bar-fill {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      transition: width 0.6s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    .energy-bar-fill.full {
+      background: linear-gradient(90deg, var(--gold), #FFD65C);
+    }
+    .energy-box-sub {
+      font-size: 11.5px;
+      color: var(--gray);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .coupons-list {
+      display: grid;
+      gap: 20px;
+    }
+    .coupon-card {
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(45,34,51,0.18);
+    }
+    .coupon-card.pastel-pink {
+      background: linear-gradient(135deg, #FFB6D9 0%, #FFC6E4 100%);
+    }
+    .coupon-card.pastel-purple {
+      background: linear-gradient(135deg, #D8A9FF 0%, #E5CCFF 100%);
+    }
+    .coupon-card.pastel-rainbow {
+      background: linear-gradient(90deg, #FFB6D9, #FFD9B6, #FFEDD9, #D9FFD9, #D9F5FF, #D9D9FF);
+    }
+    .coupon-card.pastel-green {
+      background: linear-gradient(135deg, #A8E6CF 0%, #C6F5D9 100%);
+    }
+    .coupon-card.loyalty-reward {
+      background: linear-gradient(135deg, #FFE9A8 0%, #FFD65C 100%);
+      color: var(--dark);
+    }
+    .coupon-card.game-reward {
+      background: linear-gradient(135deg, #A8D8FF 0%, #C9B8FF 100%);
+      color: var(--dark);
+    }
+    .coupon-info {
+      flex: 1;
+    }
+    .coupon-info h3 {
+      font-family:'Nunito',sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .coupon-info p {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+    .coupon-status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      background: rgba(255,255,255,0.3);
+    }
+    .coupon-status.used {
+      background: rgba(0,0,0,0.15);
+      text-decoration: line-through;
+    }
+    .coupon-action {
+      text-align: right;
+    }
+    .coupon-value {
+      font-family:'Nunito',sans-serif;
+      font-size: 30px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .btn-small {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.35);
+      border: none;
+      border-radius: 6px;
+      color: inherit;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Mitr', sans-serif;
+    }
+    .btn-small:hover {
+      background: rgba(255,255,255,0.55);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+    .empty-state h2 {
+      font-family:'Nunito',sans-serif;
+      font-size: 19px;
+      font-weight: 900;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-family: 'Nunito', 'Mitr', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(123, 94, 167, 0.35);
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .btn-secondary {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #F0EBFB;
+      color: var(--purple);
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-family: 'Mitr', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #E5DCF7;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+
+    /* ── แท่งพลังชีวิต: ส่วนเสริม ── */
+    .energy-box-warn { border-color: #FFE2A8; background: #FFFBF0; }
+    .energy-box-right { display: flex; align-items: center; gap: 8px; }
+    .energy-refresh {
+      border: none; background: #F0EBFB; color: var(--purple); font-family: 'Mitr', sans-serif;
+      font-size: 11.5px; font-weight: 500; padding: 5px 10px; border-radius: 20px; cursor: pointer;
+    }
+    .energy-refresh:active { transform: scale(.96); }
+    .energy-dots { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 2px; }
+    .energy-dot { width: 10px; height: 10px; border-radius: 50%; background: #E5DCF7; }
+    .energy-dot.on { background: linear-gradient(135deg, var(--pink), var(--purple)); }
+    .energy-box-hint { font-size: 13px; font-weight: 500; color: var(--dark); margin-top: 10px; }
+
+    /* ── หมวดคูปอง ── */
+    .coupon-section { margin-bottom: 26px; }
+    .coupon-section:last-child { margin-bottom: 0; }
+    .section-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 6px; border-bottom: 2px solid #F0EBFB;
+    }
+    .section-title { font-family: 'Nunito', 'Mitr', sans-serif; font-weight: 900; font-size: 16px; color: var(--dark); }
+    .section-count {
+      font-size: 11.5px; font-weight: 600; color: #fff; background: var(--pink);
+      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+    }
+    .section-count.zero { background: #E5DCF7; color: var(--gray); }
+    .section-desc { font-size: 11.5px; color: var(--gray); margin: 6px 0 12px; line-height: 1.5; }
+    .section-empty {
+      border: 2px dashed #E5DCF7; border-radius: 14px; padding: 16px;
+      font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.6;
+    }
+    .section-empty a { color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .coupon-section .coupons-list { gap: 12px; }
+    .coupon-card { gap: 12px; }
+    .coupon-card.birthday-coupon { color: var(--dark); }
+    .coupon-card.personal-reward { background: linear-gradient(135deg, #B8F0D8 0%, #8EDDC0 100%); color: var(--dark); }
+    .coupon-meta { margin-top: 8px; font-size: 11px; margin-bottom: 0; }
+    .coupon-code { font-size: 15px; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; word-break: break-all; }
+    .coupon-action { flex: 0 0 auto; max-width: 46%; }
+    .preview-tag {
+      position: absolute; top: 8px; right: 8px; background: #fff; color: #7B5EA7;
+      font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+    }
+    .load-error { text-align: center; color: #c62828; padding: 30px 16px; font-size: 13.5px; line-height: 1.6; }
+    .mj-toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+      background: var(--dark); color: #fff; padding: 12px 18px; border-radius: 14px;
+      font-size: 13px; line-height: 1.5; max-width: calc(100vw - 32px); text-align: center;
+      opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 2000;
+    }
+    .mj-toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .content { padding: 14px; }
+      .coupon-card { padding: 16px; }
+      .coupon-value { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+<style>
+.mj-cust-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;background:#FFF7FA;border-bottom:2px solid #FFE3ED;position:sticky;top:0;z-index:999;-webkit-overflow-scrolling:touch}
+.mj-cust-nav a{flex:0 0 auto;padding:8px 12px;background:#fff;border:2px solid #FFE3ED;border-radius:20px;text-decoration:none;color:#2D2233;font-weight:700;font-size:12.5px;white-space:nowrap;font-family:'Mitr',sans-serif}
+.mj-cust-nav a.active{background:#FF6B9D;border-color:#FF6B9D;color:#fff}
+</style>
+<div class="mj-cust-nav">
+  <a href="https://monly-jelly-application.vercel.app/index.html">🏠 หน้าแรก</a>
+  <a href="https://monly-jelly-application.vercel.app/index.html?tab=queue">📅 จองคิว</a>
+  <a href="https://monly-jelly-application.vercel.app/index.html?tab=tracking">📦 ติดตามออเดอร์</a>
+  <a href="customers-profile.html">👤 โปรไฟล์</a>
+  <a href="coupon-customizer.html">🎂 ตั้งคูปองวันเกิด</a>
+  <a href="my-coupons.html" class="active">🎟️ คูปองของฉัน</a>
+</div>
+
+  <div class="container">
+    <div class="header">
+      <h1>🎟️ คูปองของฉัน</h1>
+      <p>แต้มสะสม คูปอง และรางวัลทั้งหมดของคุณ</p>
+    </div>
+
+    <div class="content">
+      <div id="energyBoxWrap"></div>
+      <div id="couponsContainer" class="loading">
+        ⏳ กำลังโหลด...
+      </div>
+
+      <div class="buttons" id="actionButtons" style="display: none;">
+        <a href="coupon-customizer.html" class="btn-primary">🎂 ตั้งคูปองวันเกิด</a>
+        <a href="customers-profile.html" class="btn-secondary">👤 แก้ไขโปรไฟล์</a>
+        <a href="https://monly-jelly-application.vercel.app/index.html" class="btn-secondary">🏠 กลับหน้าแรก</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://d.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+  <script>
+    const API_BASE = 'https://monly-jelly-application.vercel.app';
+
+    // ป้องกัน XSS: escape ข้อความที่ลูกค้าพิมพ์เอง (เช่น ข้อความคูปอง) ก่อนแสดงผล
+    // เพราะ innerHTML รันโค้ด HTML/JavaScript ที่แอบใส่มาได้ ถ้าไม่ escape ก่อน
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = String(str ?? '');
+      return div.innerHTML;
+    }
+    let userId = null;
+
+    // ── สำคัญ (แก้ล่วงหน้า): รอให้ LINE SDK โหลดเสร็จจริงก่อนเรียก liff.init ──
+    // บั๊กเดิม: initLIFF() ถูกเรียกก่อน <script> ของ LINE SDK จะโหลด ทำให้
+    // window.liff ยังไม่มี → error → ตกไปโหมด guest สร้าง ID ปลอม "guest-xxx"
+    // → แท่งพลังชีวิต/คูปอง/โปรไฟล์ดึงข้อมูลของ ID ปลอม (ได้ 0 เสมอ)
+    function waitForLiffSdk(timeoutMs = 8000) {
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        (function check() {
+          if (window.liff && typeof window.liff.init === 'function') return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error('LIFF SDK โหลดไม่สำเร็จ'));
+          setTimeout(check, 100);
+        })();
+      });
+    }
+
+    // ── ดึง LINE userId จริงที่หน้าหลัก (index.html) เคยบันทึกไว้ในเครื่องนี้ ──
+    // ใช้เป็นตัวสำรองก่อนจะยอมสร้าง guest ID ใหม่ (กรณี LIFF ใช้ไม่ได้ในหน้านี้)
+    function getCachedLineUserId() {
+      try {
+        const raw = localStorage.getItem('mj_liff_profile');
+        if (raw) {
+          const cached = JSON.parse(raw);
+          const ageMs = Date.now() - (cached.savedAt || 0);
+          if (cached.userId && /^U/.test(cached.userId) && ageMs < 30 * 24 * 60 * 60 * 1000) return cached.userId;
+        }
+      } catch (e) { /* เงียบไว้ */ }
+      const saved = localStorage.getItem('userId');
+      if (saved && /^U/.test(saved)) return saved;
+      return null;
+    }
+
+    async function initLIFF() {
+      // ── เช็ก ?userId= จาก URL ก่อนเสมอ (เช่น มาจากหน้าอื่นที่ส่งต่อมา) ──
+      const urlParams = new URLSearchParams(window.location.search);
+      const userIdFromUrl = urlParams.get('userId');
+      if (userIdFromUrl) {
+        userId = userIdFromUrl;
+        localStorage.setItem('userId', userId);
+        loadCoupons();
+        return;
+      }
+
+      try {
+        const liffId = "2011529781-t9rocixI";
+        await waitForLiffSdk();
+        await window.liff.init({ liffId });
+        if (window.liff.isLoggedIn()) {
+          const profile = await window.liff.getProfile();
+          userId = profile.userId;
+          try { localStorage.setItem('userId', userId); } catch (e) { /* เงียบไว้ */ }
+          loadCoupons();
+        } else {
+          // ไม่บังคับ redirect ไป login LINE เด็ดขาด — หน้านี้ต้องเปิดได้จาก
+          // เบราว์เซอร์ทั่วไปนอก LINE ด้วย (แค่จะไม่มีคูปองให้เห็นถ้าเป็น guest ใหม่)
+          useGuestFallback();
+        }
+      } catch (err) {
+        useGuestFallback();
+      }
+    }
+
+    function useGuestFallback() {
+      const cachedLineId = getCachedLineUserId();
+      if (cachedLineId) {
+        userId = cachedLineId;
+        loadCoupons();
+        return;
+      }
+      const savedGuestId = localStorage.getItem('userId');
+      if (savedGuestId) {
+        userId = savedGuestId;
+        loadCoupons();
+        return;
+      }
+      userId = 'guest-' + Date.now();
+      localStorage.setItem('userId', userId);
+      const noteBox = document.createElement('div');
+      noteBox.style.cssText = 'background:#FFF3CD;color:#856404;border-radius:12px;padding:12px 14px;margin:0 0 16px;font-size:12.5px;line-height:1.6;text-align:center';
+      noteBox.textContent = '⚠️ ตอนนี้เปิดหน้านี้นอกแอป LINE อยู่ค่ะ — คูปองส่วนตัว (วันเกิด/สะสมแต้ม/เกม) ผูกกับบัญชี LINE ของคุณ กรุณาเปิดผ่านแชทร้านค้าใน LINE เพื่อดูคูปองของคุณนะคะ';
+      const container = document.querySelector('.container') || document.body;
+      container.insertBefore(noteBox, container.firstChild);
+      loadCoupons();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // โหลดข้อมูล: แท่งพลังชีวิต กับ รายการคูปอง เป็น 2 งานอิสระจากกัน
+    // ฝั่งไหนพังไม่กระทบอีกฝั่ง และแต่ละฝั่งมีสถานะ "โหลดไม่สำเร็จ" ของตัวเอง
+    // ═══════════════════════════════════════════════════════════════
+
+    // ต้องตรงกับ LOYALTY_POINTS_TARGET ใน lib/promotions.js เสมอ (ถ้าแก้ฝั่ง backend ต้องมาแก้ตรงนี้ด้วย)
+    const LOYALTY_POINTS_TARGET = 5;
+    const LOYALTY_CACHE_KEY = 'mj_loyalty_cache';
+    let lastProfile = {};
+    let isRefreshing = false;
+    let lastRefreshAt = 0;
+
+    // fetch ที่มี timeout — กันหน้าค้าง "กำลังโหลด" ตลอดไปเมื่อเน็ตช้า/ระบบไม่ตอบ
+    async function fetchJson(url, timeoutMs = 12000) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+        let body = null;
+        try { body = await res.json(); } catch (e) { body = null; } // ไม่ใช่ JSON (เช่น หน้า error ของเซิร์ฟเวอร์)
+        return { ok: res.ok, status: res.status, body };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function readLoyaltyCache() {
+      try {
+        const c = JSON.parse(localStorage.getItem(LOYALTY_CACHE_KEY) || 'null');
+        if (c && c.userId === userId && typeof c.points === 'number') return c;
+      } catch (e) { /* เงียบไว้ */ }
+      return null;
+    }
+    function writeLoyaltyCache(points) {
+      try { localStorage.setItem(LOYALTY_CACHE_KEY, JSON.stringify({ userId, points, at: Date.now() })); } catch (e) { /* เงียบไว้ */ }
+    }
+
+    // ── โหลดโปรไฟล์ → แท่งพลังชีวิต ──
+    // แยก 3 กรณีให้ชัด (เดิมทุกกรณีโชว์ "0 / 5" เหมือนกันหมด ทำให้ดูเหมือนแต้มไม่อัปเดต):
+    //   1) โหลดสำเร็จ            → โชว์แต้มจริง
+    //   2) ลูกค้าใหม่ ยังไม่มีข้อมูล → โชว์ 0 พร้อมคำชวนเริ่มสะสม
+    //   3) ระบบ/เน็ตมีปัญหา       → บอกตรงๆ ว่าโหลดไม่สำเร็จ (ไม่โชว์ 0 หลอก) + ปุ่มลองใหม่
+    async function loadEnergy() {
+      if (String(userId || '').startsWith('guest-')) {
+        lastProfile = {};
+        renderEnergyBar({ state: 'guest' });
+        return;
+      }
+      try {
+        const r = await fetchJson(`${API_BASE}/api/customer/${encodeURIComponent(userId)}?_=${Date.now()}`);
+        if (r.ok && r.body && typeof r.body === 'object') {
+          lastProfile = r.body;
+          const points = Number(r.body.loyaltyPoints) || 0;
+          writeLoyaltyCache(points);
+          renderEnergyBar({ state: 'ok', points });
+          return;
+        }
+        // 404 ที่ API ของเราตอบเองว่า "not found" = ลูกค้าใหม่จริงๆ (ยังไม่เคยมีโปรไฟล์)
+        if (r.status === 404 && r.body && r.body.error === 'not found') {
+          lastProfile = {};
+          writeLoyaltyCache(0);
+          renderEnergyBar({ state: 'new', points: 0 });
+          return;
+        }
+        throw new Error('HTTP ' + r.status);
+      } catch (err) {
+        console.error('โหลดแต้มพลังชีวิตไม่สำเร็จ:', err);
+        const cached = readLoyaltyCache();
+        renderEnergyBar(cached ? { state: 'stale', points: cached.points, at: cached.at } : { state: 'error' });
+      }
+    }
+
+    function renderEnergyBar(view) {
+      const wrap = document.getElementById('energyBoxWrap');
+      if (!wrap) return;
+      const refreshBtn = `<button type="button" class="energy-refresh" data-action="refresh" aria-label="อัปเดตแต้ม">🔄 อัปเดต</button>`;
+
+      if (view.state === 'loading') {
+        wrap.innerHTML = `<div class="energy-box"><div class="energy-box-top"><div class="energy-box-title">⚡ แท่งพลังชีวิต</div></div><div class="energy-box-sub">⏳ กำลังโหลดแต้มของคุณ…</div></div>`;
+        return;
+      }
+      if (view.state === 'guest') {
+        wrap.innerHTML = `<div class="energy-box"><div class="energy-box-top"><div class="energy-box-title">⚡ แท่งพลังชีวิต</div></div><div class="energy-box-sub">เปิดหน้านี้ผ่านแชทร้านใน LINE เพื่อดูแต้มสะสมของคุณนะคะ</div></div>`;
+        return;
+      }
+      if (view.state === 'error') {
+        wrap.innerHTML = `
+          <div class="energy-box energy-box-warn">
+            <div class="energy-box-top"><div class="energy-box-title">⚡ แท่งพลังชีวิต</div>${refreshBtn}</div>
+            <div class="energy-box-sub">⚠️ โหลดแต้มไม่สำเร็จ แต้มของคุณยังอยู่ครบ ไม่ได้หายไปไหนนะคะ กด "อัปเดต" เพื่อลองใหม่อีกครั้ง</div>
+          </div>`;
+        return;
+      }
+
+      const points = Math.max(0, Math.min(Number(view.points) || 0, LOYALTY_POINTS_TARGET));
+      const pct = Math.round((points / LOYALTY_POINTS_TARGET) * 100);
+      const isFull = points >= LOYALTY_POINTS_TARGET;
+      const remaining = LOYALTY_POINTS_TARGET - points;
+      let hint;
+      if (view.state === 'stale') {
+        const when = view.at ? new Date(view.at).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+        hint = `⚠️ ยังเชื่อมต่อระบบไม่ได้ กำลังแสดงแต้มล่าสุดที่เคยโหลดไว้${when ? ' (' + when + ')' : ''} กด "อัปเดต" เพื่อลองใหม่`;
+      } else if (view.state === 'new' || points === 0) {
+        hint = `เริ่มสะสมได้เลย! สั่งซื้อสำเร็จ 1 ครั้ง = 1 แต้ม`;
+      } else {
+        hint = `สะสมอีก ${remaining} ครั้ง รับส่วนลด 15 บาททันที 🎉`;
+      }
+      const dots = Array.from({ length: LOYALTY_POINTS_TARGET }, (_, i) => `<span class="energy-dot${i < points ? ' on' : ''}"></span>`).join('');
+
+      wrap.innerHTML = `
+        <div class="energy-box${view.state === 'stale' ? ' energy-box-warn' : ''}">
+          <div class="energy-box-top">
+            <div class="energy-box-title">⚡ แท่งพลังชีวิต</div>
+            <div class="energy-box-right"><span class="energy-box-count">${points} / ${LOYALTY_POINTS_TARGET}</span>${refreshBtn}</div>
+          </div>
+          <div class="energy-bar-track">
+            <div class="energy-bar-fill${isFull ? ' full' : ''}" style="width:${pct}%"></div>
+          </div>
+          <div class="energy-dots">${dots}</div>
+          <div class="energy-box-hint">${hint}</div>
+          <div class="energy-box-sub">
+            สั่งซื้อสำเร็จครบ ${LOYALTY_POINTS_TARGET} ครั้ง รับส่วนลด 15 บาท ใช้ได้ภายใน 6 เดือนหลังได้รับ
+            (ใช้ได้ 1 ครั้งต่อ 1 รางวัล ไม่สามารถรวมกับรางวัลอื่นได้)
+          </div>
+        </div>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // คูปอง — แยกเป็นหมวดชัดเจน ไม่ปนกัน
+    // ═══════════════════════════════════════════════════════════════
+    const COUPON_SECTIONS = [
+      { key: 'loyalty', icon: '⚡', title: 'รางวัลแท่งพลังชีวิต', desc: 'ส่วนลด 15 บาท เมื่อสะสมครบ 5 ครั้ง ใช้ได้ภายใน 6 เดือน', always: true,
+        empty: 'ยังไม่มีรางวัลที่ใช้ได้ตอนนี้ สะสมแท่งพลังชีวิตให้ครบ 5 ครั้งเพื่อรับรางวัล' },
+      { key: 'birthday', icon: '🎂', title: 'คูปองวันเกิด', desc: 'ส่วนลด 20 บาท ส่งให้อัตโนมัติในวันเกิด ใช้ได้ภายใน 3 เดือน', always: true,
+        empty: 'ยังไม่มีคูปองวันเกิดที่ใช้ได้ตอนนี้ ระบบจะส่งให้อัตโนมัติเมื่อถึงวันเกิดของคุณ' },
+      { key: 'game', icon: '🔮', title: 'รางวัลจากเกม', desc: 'โค้ดส่วนลดจาก Monly Lucky Game', always: false },
+      { key: 'personal', icon: '🎁', title: 'ส่วนลดพิเศษจากร้าน', desc: 'ส่วนลดที่ทางร้านมอบให้คุณเป็นพิเศษ', always: false },
+    ];
+
+    // จัดคูปองเข้าหมวด — คูปองเก่าที่ไม่มี source ถือเป็นคูปองวันเกิด (ระบบเดิมมีแค่ประเภทเดียว)
+    function couponCategory(c) {
+      if (c.source === 'loyalty') return 'loyalty';
+      if (c.source === 'game') return 'game';
+      if (c.source === 'personal') return 'personal';
+      return 'birthday';
+    }
+
+    // ใช้ได้จริงตอนนี้ = ยังไม่ถูกใช้ และยังไม่หมดอายุ
+    function isUsableCoupon(c, now) {
+      if (!c || typeof c !== 'object') return false;
+      if (c.usedAt || c.used === true) return false;
+      if (c.expiresAt && new Date(c.expiresAt).getTime() < now) return false;
+      return true;
+    }
+
+    async function loadCouponList() {
+      const container = document.getElementById('couponsContainer');
+      try {
+        const r = await fetchJson(`${API_BASE}/api/coupons?userId=${encodeURIComponent(userId)}&_=${Date.now()}`);
+        if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
+        const now = Date.now();
+        const usable = (Array.isArray(r.body.coupons) ? r.body.coupons : []).filter((c) => isUsableCoupon(c, now));
+        usable.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); // ใหม่ก่อน
+        renderCouponSections(usable);
+      } catch (err) {
+        console.error('โหลดคูปองไม่สำเร็จ:', err);
+        container.className = '';
+        container.innerHTML = `
+          <div class="load-error">
+            <div>❌ โหลดคูปองไม่สำเร็จ คูปองของคุณยังอยู่ครบ ลองใหม่อีกครั้งนะคะ</div>
+            <button type="button" class="btn-secondary" data-action="refresh" style="border:none;cursor:pointer;margin-top:12px">🔄 ลองใหม่</button>
+          </div>`;
+      }
+      document.getElementById('actionButtons').style.display = 'flex';
+    }
+
+    function daysLeftText(c) {
+      if (!c.expiresAt) return { status: '✨ พร้อมใช้', expiry: '' };
+      const exp = new Date(c.expiresAt);
+      const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const status = days <= 1 ? '⏰ พร้อมใช้ — หมดอายุภายในวันนี้/พรุ่งนี้' : `✨ พร้อมใช้ — เหลืออีก ${days} วัน`;
+      return { status, expiry: ' · หมดอายุ ' + exp.toLocaleDateString('th-TH') };
+    }
+
+    function couponCardHtml(c) {
+      const cat = couponCategory(c);
+      const code = c.code || c.id || ''; // รองรับคูปองเก่าที่อาจยังไม่มี code
+      const created = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '';
+      const { status, expiry } = daysLeftText(c);
+      let cls, title, body, value;
+
+      if (cat === 'loyalty') {
+        cls = 'loyalty-reward';
+        title = '⚡ รางวัลแท่งพลังชีวิต';
+        body = `<p>สะสมครบ ${LOYALTY_POINTS_TARGET} ครั้ง รับส่วนลดนี้!</p>`;
+        value = `-${Number(c.discount) || 15}฿`;
+      } else if (cat === 'game') {
+        cls = 'game-reward';
+        title = '🔮 โค้ดจากคำทำนายวันนี้';
+        body = `<p>ได้รับจากการเล่น Monly Lucky Game</p>`;
+        value = c.discountPercent ? `-${Number(c.discountPercent)}%` : `-${Number(c.discount) || 0}฿`;
+      } else if (cat === 'personal') {
+        cls = 'personal-reward';
+        title = '🎁 ส่วนลดพิเศษจากทางร้าน';
+        body = `<p>${c.note ? escapeHtml(c.note) : 'ทางร้านมอบส่วนลดพิเศษให้คุณค่ะ'}</p>`;
+        value = `-${Number(c.discount) || 0}฿`;
+      } else {
+        const fontSizePx = { small: '12px', medium: '15px', large: '19px' }[c.fontSize] || '13px';
+        const textColorStyle = c.textColor ? `color:${escapeHtml(c.textColor)};` : '';
+        const fontFamilyStyle = c.fontFamily ? `font-family:${escapeHtml(c.fontFamily)};` : '';
+        cls = escapeHtml(c.theme || 'pastel-rainbow') + ' birthday-coupon';
+        title = '🎂 คูปองวันเกิด';
+        body =
+          (Array.isArray(c.decorations) && c.decorations.length ? `<div style="font-size:16px;margin-bottom:4px">${c.decorations.map(escapeHtml).join(' ')}</div>` : '') +
+          `<p style="font-size:${fontSizePx};${textColorStyle}${fontFamilyStyle}">${escapeHtml(c.greeting || 'Happy Birthday!')}</p>`;
+        value = `-${Number(c.discount) || 20}฿`;
+      }
+
+      return `
+        <div class="coupon-card ${cls}">
+          <div class="coupon-info">
+            <h3>${title}</h3>
+            ${body}
+            <div class="coupon-status">${status}</div>
+            <p class="coupon-meta">${created ? 'ได้รับเมื่อ ' + created : ''}${expiry}</p>
+          </div>
+          <div class="coupon-action">
+            <div class="coupon-value">${value}</div>
+            <div class="coupon-code">${escapeHtml(code)}</div>
+            <button type="button" class="btn-small" data-action="copy" data-code="${escapeHtml(code)}">📋 คัดลอกโค้ด</button>
+          </div>
+        </div>`;
+    }
+
+    function previewCardHtml(profile) {
+      const greeting = profile.couponGreeting || `🎂 Happy Birthday, ${profile.name || ''}!`;
+      const fontSizePx = { small: '12px', medium: '15px', large: '19px' }[profile.couponFontSize] || '13px';
+      const textColorStyle = profile.couponTextColor ? `color:${escapeHtml(profile.couponTextColor)};` : '';
+      return `
+        <div class="coupon-card ${escapeHtml(profile.couponTheme)} birthday-coupon" style="opacity:.8;position:relative">
+          <div class="preview-tag">🔍 ตัวอย่าง</div>
+          <div class="coupon-info">
+            <h3>🎂 คูปองวันเกิด</h3>
+            <p style="font-size:${fontSizePx};${textColorStyle}">${escapeHtml(greeting)}</p>
+            <div class="coupon-status">⏳ รอถึงวันเกิดของคุณ ระบบจะสร้างคูปองจริงให้อัตโนมัติ</div>
+          </div>
+          <div class="coupon-action">
+            <div class="coupon-value">-20฿</div>
+            <div style="font-size:11px">(ยังใช้ไม่ได้)</div>
+          </div>
+        </div>`;
+    }
+
+    function renderCouponSections(usable) {
+      const container = document.getElementById('couponsContainer');
+      container.className = '';
+      const groups = { birthday: [], loyalty: [], game: [], personal: [] };
+      usable.forEach((c) => groups[couponCategory(c)].push(c));
+
+      container.innerHTML = COUPON_SECTIONS.map((sec) => {
+        const list = groups[sec.key];
+        if (!list.length && !sec.always) return ''; // หมวดเสริม: ไม่มีคูปองก็ไม่ต้องโชว์หัวข้อ
+        let inner = list.map(couponCardHtml).join('');
+        if (!list.length) {
+          // หมวดวันเกิด: ถ้าตั้งธีม/คำอวยพรไว้แล้ว โชว์ "ตัวอย่างคูปอง" แทนช่องว่าง
+          if (sec.key === 'birthday' && lastProfile && lastProfile.couponTheme) {
+            inner = previewCardHtml(lastProfile);
+          } else {
+            inner = `<div class="section-empty">${sec.empty}${sec.key === 'birthday' ? ' <a href="coupon-customizer.html">ตั้งธีมคูปองวันเกิดไว้ล่วงหน้า →</a>' : ''}</div>`;
+          }
+        }
+        return `
+          <section class="coupon-section" data-section="${sec.key}">
+            <div class="section-head">
+              <div class="section-title">${sec.icon} ${sec.title}</div>
+              <div class="section-count${list.length ? '' : ' zero'}">${list.length} ใบ</div>
+            </div>
+            <div class="section-desc">${sec.desc}</div>
+            <div class="coupons-list">${inner}</div>
+          </section>`;
+      }).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // โหลดทั้งหน้า + รีเฟรชอัตโนมัติ
+    // ═══════════════════════════════════════════════════════════════
+    async function loadCoupons(opts) {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      lastRefreshAt = Date.now();
+      const silent = opts && opts.silent;
+      try {
+        if (!silent) renderEnergyBar({ state: 'loading' });
+        // โหลดแต้มก่อน (ได้ lastProfile ไว้ใช้โชว์ตัวอย่างคูปองวันเกิด) แล้วค่อยโหลดคูปอง
+        await loadEnergy();
+        await loadCouponList();
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    // สำคัญ: LINE มักไม่โหลดหน้าใหม่ตอนลูกค้าสลับกลับมา (แค่ดึงหน้าเดิมที่ค้างไว้ขึ้นมา)
+    // ทำให้แต้ม/คูปองค้างค่าเก่า — รีเฟรชให้เองทุกครั้งที่ลูกค้ากลับมาที่หน้านี้
+    function refreshIfStale() {
+      if (!userId) return;
+      if (Date.now() - lastRefreshAt < 4000) return; // กันยิงซ้ำถี่ๆ จากหลาย event พร้อมกัน
+      loadCoupons({ silent: true });
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshIfStale(); });
+    window.addEventListener('focus', refreshIfStale);
+    window.addEventListener('pageshow', (e) => { if (e.persisted) refreshIfStale(); });
+
+    // ปุ่มในหน้า (อัปเดต / คัดลอกโค้ด) — ใช้ event delegation ไม่ฝังโค้ดลงใน HTML
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      if (btn.dataset.action === 'refresh') {
+        if (!userId) return;
+        lastRefreshAt = 0;
+        loadCoupons();
+      } else if (btn.dataset.action === 'copy') {
+        copyCoupon(btn.dataset.code || '');
+      }
+    });
+
+    function showToast(message) {
+      let t = document.getElementById('mjToast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'mjToast';
+        t.className = 'mj-toast';
+        document.body.appendChild(t);
+      }
+      t.textContent = message;
+      t.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    async function copyCoupon(code) {
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(code);
+          copied = true;
+        }
+      } catch (e) { copied = false; }
+      if (!copied) {
+        // สำรอง: เบราว์เซอร์ในแอป LINE บางรุ่นไม่อนุญาต clipboard API
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = code;
+          ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+          document.body.appendChild(ta);
+          ta.select();
+          copied = document.execCommand('copy');
+          ta.remove();
+        } catch (e) { copied = false; }
+      }
+      showToast(copied
+        ? `✅ คัดลอกโค้ด ${code} แล้ว นำไปกรอกในช่อง "โค้ดส่วนลด" ตอนสั่งซื้อได้เลย`
+        : `คัดลอกอัตโนมัติไม่ได้ กรุณาจดโค้ด: ${code}`);
+    }
+
+    initLIFF();
+  </script>
+</body>
+</html>
